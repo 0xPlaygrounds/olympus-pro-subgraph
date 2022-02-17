@@ -114,7 +114,7 @@ export class ControlVariableAdjustment__Params {
   }
 }
 
-export class CustomBond__adjustmentResult {
+export class CustomBondV1__adjustmentResult {
   value0: boolean;
   value1: BigInt;
   value2: BigInt;
@@ -146,7 +146,7 @@ export class CustomBond__adjustmentResult {
   }
 }
 
-export class CustomBond__bondInfoResult {
+export class CustomBondV1__bondInfoResult {
   value0: BigInt;
   value1: BigInt;
   value2: BigInt;
@@ -169,7 +169,7 @@ export class CustomBond__bondInfoResult {
   }
 }
 
-export class CustomBond__termsResult {
+export class CustomBondV1__termsResult {
   value0: BigInt;
   value1: BigInt;
   value2: BigInt;
@@ -201,19 +201,19 @@ export class CustomBond__termsResult {
   }
 }
 
-export class CustomBond extends ethereum.SmartContract {
-  static bind(address: Address): CustomBond {
-    return new CustomBond("CustomBond", address);
+export class CustomBondV1 extends ethereum.SmartContract {
+  static bind(address: Address): CustomBondV1 {
+    return new CustomBondV1("CustomBondV1", address);
   }
 
-  adjustment(): CustomBond__adjustmentResult {
+  adjustment(): CustomBondV1__adjustmentResult {
     let result = super.call(
       "adjustment",
       "adjustment():(bool,uint256,uint256,uint256,uint256)",
       []
     );
 
-    return new CustomBond__adjustmentResult(
+    return new CustomBondV1__adjustmentResult(
       result[0].toBoolean(),
       result[1].toBigInt(),
       result[2].toBigInt(),
@@ -222,7 +222,7 @@ export class CustomBond extends ethereum.SmartContract {
     );
   }
 
-  try_adjustment(): ethereum.CallResult<CustomBond__adjustmentResult> {
+  try_adjustment(): ethereum.CallResult<CustomBondV1__adjustmentResult> {
     let result = super.tryCall(
       "adjustment",
       "adjustment():(bool,uint256,uint256,uint256,uint256)",
@@ -233,7 +233,7 @@ export class CustomBond extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(
-      new CustomBond__adjustmentResult(
+      new CustomBondV1__adjustmentResult(
         value[0].toBoolean(),
         value[1].toBigInt(),
         value[2].toBigInt(),
@@ -243,14 +243,14 @@ export class CustomBond extends ethereum.SmartContract {
     );
   }
 
-  bondInfo(param0: Address): CustomBond__bondInfoResult {
+  bondInfo(param0: Address): CustomBondV1__bondInfoResult {
     let result = super.call(
       "bondInfo",
       "bondInfo(address):(uint256,uint256,uint256,uint256)",
       [ethereum.Value.fromAddress(param0)]
     );
 
-    return new CustomBond__bondInfoResult(
+    return new CustomBondV1__bondInfoResult(
       result[0].toBigInt(),
       result[1].toBigInt(),
       result[2].toBigInt(),
@@ -260,7 +260,7 @@ export class CustomBond extends ethereum.SmartContract {
 
   try_bondInfo(
     param0: Address
-  ): ethereum.CallResult<CustomBond__bondInfoResult> {
+  ): ethereum.CallResult<CustomBondV1__bondInfoResult> {
     let result = super.tryCall(
       "bondInfo",
       "bondInfo(address):(uint256,uint256,uint256,uint256)",
@@ -271,7 +271,7 @@ export class CustomBond extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(
-      new CustomBond__bondInfoResult(
+      new CustomBondV1__bondInfoResult(
         value[0].toBigInt(),
         value[1].toBigInt(),
         value[2].toBigInt(),
@@ -542,14 +542,14 @@ export class CustomBond extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  terms(): CustomBond__termsResult {
+  terms(): CustomBondV1__termsResult {
     let result = super.call(
       "terms",
       "terms():(uint256,uint256,uint256,uint256,uint256)",
       []
     );
 
-    return new CustomBond__termsResult(
+    return new CustomBondV1__termsResult(
       result[0].toBigInt(),
       result[1].toBigInt(),
       result[2].toBigInt(),
@@ -558,7 +558,7 @@ export class CustomBond extends ethereum.SmartContract {
     );
   }
 
-  try_terms(): ethereum.CallResult<CustomBond__termsResult> {
+  try_terms(): ethereum.CallResult<CustomBondV1__termsResult> {
     let result = super.tryCall(
       "terms",
       "terms():(uint256,uint256,uint256,uint256,uint256)",
@@ -569,7 +569,7 @@ export class CustomBond extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(
-      new CustomBond__termsResult(
+      new CustomBondV1__termsResult(
         value[0].toBigInt(),
         value[1].toBigInt(),
         value[2].toBigInt(),

@@ -6,14 +6,28 @@ import {
   DataSourceContext
 } from "@graphprotocol/graph-ts";
 
-export class CustomBond extends DataSourceTemplate {
+export class CustomBondV1 extends DataSourceTemplate {
   static create(address: Address): void {
-    DataSourceTemplate.create("CustomBond", [address.toHex()]);
+    DataSourceTemplate.create("CustomBondV1", [address.toHex()]);
   }
 
   static createWithContext(address: Address, context: DataSourceContext): void {
     DataSourceTemplate.createWithContext(
-      "CustomBond",
+      "CustomBondV1",
+      [address.toHex()],
+      context
+    );
+  }
+}
+
+export class CustomBondV2 extends DataSourceTemplate {
+  static create(address: Address): void {
+    DataSourceTemplate.create("CustomBondV2", [address.toHex()]);
+  }
+
+  static createWithContext(address: Address, context: DataSourceContext): void {
+    DataSourceTemplate.createWithContext(
+      "CustomBondV2",
       [address.toHex()],
       context
     );

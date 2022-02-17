@@ -1,9 +1,11 @@
-import { NATIVE_TOKEN, STABLE_TOKEN, ROUTERS } from './Constants'
 import { Address, BigDecimal, BigInt, log } from '@graphprotocol/graph-ts'
-import { UniswapRouter } from '../../generated/OlympusProFactory/UniswapRouter';
+
+import { ERC20 } from '../../generated/OlympusProFactoryV1/ERC20';
+import { UniswapRouter } from '../../generated/OlympusProFactoryV1/UniswapRouter';
+import { UniswapV2Pair } from '../../generated/OlympusProFactoryV1/UniswapV2Pair';
+
+import { NATIVE_TOKEN, STABLE_TOKEN, ROUTERS } from './Constants'
 import { toDecimal } from './Decimals'
-import { ERC20 } from '../../generated/OlympusProFactory/ERC20';
-import { UniswapV2Pair } from '../../generated/OlympusProFactory/UniswapV2Pair';
 
 function removeDuplicatePath(path: Address[]): Address[] {
     return path.filter(function(item, pos, arr){
