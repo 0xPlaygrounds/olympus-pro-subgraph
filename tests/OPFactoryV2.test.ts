@@ -4,10 +4,15 @@ import { assert, createMockedFunction, clearStore, test, newMockEvent, newMockCa
 import { handleCreateBond, handleCreateBondAndTreasury } from '../src/OPFactoryV2'
 import { CreateBondAndTreasuryCall, CreateBondCall } from '../generated/OlympusProFactoryV2/OlympusProFactoryV2'
 import { 
+  assertBondEquals,
+  bond_STRM_WETH,
+  bond_TOKE,
   mockCustomTreasury_payoutToken, 
   mockERC20_symbol, 
-  mockLPCalls 
-} from './utils'
+  mockLPCalls, 
+  TIMESTAMP_20220101_000000
+} from './Utils'
+import { Bond } from '../generated/schema'
 
 // ================================================================
 // Useful constants
@@ -101,33 +106,17 @@ test('Test CreateBondAndTreasuryCall handler with ERC20 bond', () => {
     '0xfe349fb05ee6d5598efc7bb561f7f91934167c7c',
     '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec'
   )
+  call.block.timestamp = TIMESTAMP_20220101_000000
 
   // Mock calls
   mockLPCalls('0x2e9d63788249371f1dfc918a52f8d799f4a38c94', '', '', true)
   mockERC20_symbol('0x2e9d63788249371f1dfc918a52f8d799f4a38c94', 'TOKE')
   mockERC20_symbol('0xd3b5d9a561c293fb42b446fe7e237daa9bf9aa84', 'tALCX')
 
-  handleCreateBondAndTreasurys([call])
+  handleCreateBondAndTreasury(call)
 
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec', 'id', '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec', 'createdAtTimestamp', '1')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec', 'owner', '0x9e2b6378ee8ad2a4a95fe481d63caba8fb0ebbf9')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec', 'name', 'TOKE')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec', 'token0', '0x2e9d63788249371f1dfc918a52f8d799f4a38c94')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec', 'token1', '0x0000000000000000000000000000000000000000')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec', 'treasury', '0xfe349fb05ee6d5598efc7bb561f7f91934167c7c')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec', 'principleToken', '0x2e9d63788249371f1dfc918a52f8d799f4a38c94')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec', 'payoutToken', '0xd3b5d9a561c293fb42b446fe7e237daa9bf9aa84')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec', 'fees', '3.33')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec', 'type', 'ERC20')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec', 'userBondCount', '0')
-  // assert.fieldEquals(BOND_ENTITY_TYPE, '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec', 'latestUserBond', 'null')
-  // assert.fieldEquals(BOND_ENTITY_TYPE, '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec', 'userBonds', '[]')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec', 'userRedemptionCount', '0')
-  // assert.fieldEquals(BOND_ENTITY_TYPE, '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec', 'latestUserRedemption', 'null')
-  // assert.fieldEquals(BOND_ENTITY_TYPE, '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec', 'userRedemptions', '[]')
-  // assert.fieldEquals(BOND_ENTITY_TYPE, '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec', 'dailyData', '[]')
-  // assert.fieldEquals(BOND_ENTITY_TYPE, '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec', 'hourlyData', '[]')
+  let bond = Bond.load('0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec') as Bond
+  assertBondEquals(bond, bond_TOKE)
   clearStore()
 })
 
@@ -142,6 +131,7 @@ test('Test CreateBondCall handler with LP bond', () => {
     '0x3791cc891382704a91c55b8e5ac2b05092f95fa2',
     '0xdcfd008628be285400cee4d869e712f5f72d67cc'
   )
+  call.block.timestamp = TIMESTAMP_20220101_000000
 
   // Mock calls
   mockCustomTreasury_payoutToken(
@@ -158,26 +148,9 @@ test('Test CreateBondCall handler with LP bond', () => {
   mockERC20_symbol('0x0edf9bc41bbc1354c70e2107f80c42cae7fbbca8', 'STRM')
   mockERC20_symbol('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', 'WETH')
 
-  handleCreateBonds([call])
+  handleCreateBond(call)
 
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0xdcfd008628be285400cee4d869e712f5f72d67cc', 'id', '0xdcfd008628be285400cee4d869e712f5f72d67cc')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0xdcfd008628be285400cee4d869e712f5f72d67cc', 'createdAtTimestamp', '1')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0xdcfd008628be285400cee4d869e712f5f72d67cc', 'owner', '0x4f4f6b428af559db1dbe3cb32e1e3500deffa799')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0xdcfd008628be285400cee4d869e712f5f72d67cc', 'name', 'STRM-WETH')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0xdcfd008628be285400cee4d869e712f5f72d67cc', 'token0', '0x0edf9bc41bbc1354c70e2107f80c42cae7fbbca8')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0xdcfd008628be285400cee4d869e712f5f72d67cc', 'token1', '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0xdcfd008628be285400cee4d869e712f5f72d67cc', 'treasury', '0x3791cc891382704a91c55b8e5ac2b05092f95fa2')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0xdcfd008628be285400cee4d869e712f5f72d67cc', 'principleToken', '0xb301d7efb4d46528f9cf0e5c86b065fbc9f50e9a')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0xdcfd008628be285400cee4d869e712f5f72d67cc', 'payoutToken', '0x0edf9bc41bbc1354c70e2107f80c42cae7fbbca8')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0xdcfd008628be285400cee4d869e712f5f72d67cc', 'fees', '3.33')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0xdcfd008628be285400cee4d869e712f5f72d67cc', 'type', 'LP')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0xdcfd008628be285400cee4d869e712f5f72d67cc', 'userBondCount', '0')
-  // assert.fieldEquals(BOND_ENTITY_TYPE, '0xdcfd008628be285400cee4d869e712f5f72d67cc', 'latestUserBond', 'null')
-  // assert.fieldEquals(BOND_ENTITY_TYPE, '0xdcfd008628be285400cee4d869e712f5f72d67cc', 'userBonds', '[]')
-  assert.fieldEquals(BOND_ENTITY_TYPE, '0xdcfd008628be285400cee4d869e712f5f72d67cc', 'userRedemptionCount', '0')
-  // assert.fieldEquals(BOND_ENTITY_TYPE, '0xdcfd008628be285400cee4d869e712f5f72d67cc', 'latestUserRedemption', 'null')
-  // assert.fieldEquals(BOND_ENTITY_TYPE, '0xdcfd008628be285400cee4d869e712f5f72d67cc', 'userRedemptions', '[]')
-  // assert.fieldEquals(BOND_ENTITY_TYPE, '0xdcfd008628be285400cee4d869e712f5f72d67cc', 'dailyData', '[]')
-  // assert.fieldEquals(BOND_ENTITY_TYPE, '0xdcfd008628be285400cee4d869e712f5f72d67cc', 'hourlyData', '[]')
+  let bond = Bond.load('0xdcfd008628be285400cee4d869e712f5f72d67cc') as Bond
+  assertBondEquals(bond, bond_STRM_WETH)
   clearStore()
 })
