@@ -1,12 +1,12 @@
 import { Address, BigDecimal, BigInt, Bytes, ethereum, store, Value } from '@graphprotocol/graph-ts'
 import { assert, createMockedFunction } from "matchstick-as";
-import { Bond } from '../generated/schema';
+import { Bond, BondDayData, BondHourData, UserBond, UserRedemption } from '../generated/schema';
 import { BIGINT_ONE } from '../src/utils/Constants';
 
 // ================================================================
 // LP mock call helpers
 // ================================================================
-export function mockLP_token0(lp: string, token0: string, revert: boolean): void {
+export function mockUniV2LP_token0(lp: string, token0: string, revert: boolean): void {
   if (revert) {
     createMockedFunction(Address.fromString(lp), 'token0', 'token0():(address)')
       .reverts()
@@ -16,7 +16,7 @@ export function mockLP_token0(lp: string, token0: string, revert: boolean): void
   }
 }
 
-export function mockLP_token1(lp: string, token1: string, revert: boolean): void {
+export function mockUniV2LP_token1(lp: string, token1: string, revert: boolean): void {
   if (revert) {
     createMockedFunction(Address.fromString(lp), 'token1', 'token1():(address)')
       .reverts()
@@ -26,9 +26,169 @@ export function mockLP_token1(lp: string, token1: string, revert: boolean): void
   }
 }
 
-export function mockLPCalls(lp: string, token0: string, token1: string, revert: boolean): void {
-  mockLP_token0(lp, token0, revert)
-  mockLP_token1(lp, token1, revert)
+export function mockUniV2LP_decimals(lp: string, decimals: u32, revert: boolean): void {
+  if (revert) {
+    createMockedFunction(Address.fromString(lp), 'decimals', 'decimals():(uint8)')
+      .reverts()
+  } else {
+    createMockedFunction(Address.fromString(lp), 'decimals', 'decimals():(uint8)')
+      .returns([ethereum.Value.fromI32(decimals)])
+  }
+}
+
+export function mockUniV2LP_totalSupply(lp: string, totalSupply: BigInt, revert: boolean): void {
+  if (revert) {
+    createMockedFunction(Address.fromString(lp), 'totalSupply', 'totalSupply():(uint256)')
+      .reverts()
+  } else {
+    createMockedFunction(Address.fromString(lp), 'totalSupply', 'totalSupply():(uint256)')
+      .returns([ethereum.Value.fromUnsignedBigInt(totalSupply)])
+  }
+}
+
+export function mockUniV2LP_getReserves(lp: string, reserve0: BigInt, reserve1: BigInt, timestamp: BigInt, revert: boolean): void {
+  if (revert) {
+    createMockedFunction(Address.fromString(lp), 'getReserves', 'getReserves():(uint112,uint112,uint32)')
+      .reverts()
+  } else {
+    createMockedFunction(Address.fromString(lp), 'getReserves', 'getReserves():(uint112,uint112,uint32)')
+      .returns([
+        ethereum.Value.fromUnsignedBigInt(reserve0),
+        ethereum.Value.fromUnsignedBigInt(reserve1),
+        ethereum.Value.fromUnsignedBigInt(timestamp),
+      ])
+  }
+}
+
+export function mockUniV2LPCalls(
+  lp: string,
+  token0: string,
+  token1: string,
+  decimals: i32,
+  totalSupply: BigInt,
+  reserve0: BigInt,
+  reserve1: BigInt,
+  timestamp: BigInt,
+  revert: boolean
+): void {
+  mockUniV2LP_token0(lp, token0, revert)
+  mockUniV2LP_token1(lp, token1, revert)
+  mockUniV2LP_decimals(lp, decimals, revert)
+  mockUniV2LP_totalSupply(lp, totalSupply, revert)
+  mockUniV2LP_getReserves(lp, reserve0, reserve1, timestamp, revert)
+}
+
+export function mockSorbetLP_token0(lp: string, token0: string, revert: boolean): void {
+  if (revert) {
+    createMockedFunction(Address.fromString(lp), 'token0', 'token0():(address)')
+      .reverts()
+  } else {
+    createMockedFunction(Address.fromString(lp), 'token0', 'token0():(address)')
+      .returns([ethereum.Value.fromAddress(Address.fromString(token0))])
+  }
+}
+
+export function mockSorbetLP_token1(lp: string, token1: string, revert: boolean): void {
+  if (revert) {
+    createMockedFunction(Address.fromString(lp), 'token1', 'token1():(address)')
+      .reverts()
+  } else {
+    createMockedFunction(Address.fromString(lp), 'token1', 'token1():(address)')
+      .returns([ethereum.Value.fromAddress(Address.fromString(token1))])
+  }
+}
+
+export function mockSorbetLP_decimals(lp: string, decimals: u32, revert: boolean): void {
+  if (revert) {
+    createMockedFunction(Address.fromString(lp), 'decimals', 'decimals():(uint8)')
+      .reverts()
+  } else {
+    createMockedFunction(Address.fromString(lp), 'decimals', 'decimals():(uint8)')
+      .returns([ethereum.Value.fromI32(decimals)])
+  }
+}
+
+export function mockSorbetLP_totalSupply(lp: string, totalSupply: BigInt, revert: boolean): void {
+  if (revert) {
+    createMockedFunction(Address.fromString(lp), 'totalSupply', 'totalSupply():(uint256)')
+      .reverts()
+  } else {
+    createMockedFunction(Address.fromString(lp), 'totalSupply', 'totalSupply():(uint256)')
+      .returns([ethereum.Value.fromUnsignedBigInt(totalSupply)])
+  }
+}
+
+export function mockSorbetLP_getUnderlyingBalances(lp: string, reserve0: BigInt, reserve1: BigInt, revert: boolean): void {
+  if (revert) {
+    createMockedFunction(Address.fromString(lp), 'getUnderlyingBalances', 'getUnderlyingBalances():(uint256,uint256)')
+      .reverts()
+  } else {
+    createMockedFunction(Address.fromString(lp), 'getUnderlyingBalances', 'getUnderlyingBalances():(uint256,uint256)')
+      .returns([
+        ethereum.Value.fromUnsignedBigInt(reserve0),
+        ethereum.Value.fromUnsignedBigInt(reserve1),
+      ])
+  }
+}
+
+export function mockSorbetLPCalls(
+  lp: string,
+  token0: string,
+  token1: string,
+  decimals: i32,
+  totalSupply: BigInt,
+  reserve0: BigInt,
+  reserve1: BigInt,
+  timestamp: BigInt,
+  revert: boolean
+): void {
+  mockSorbetLP_token0(lp, token0, revert)
+  mockSorbetLP_token1(lp, token1, revert)
+  mockSorbetLP_decimals(lp, decimals, revert)
+  mockSorbetLP_totalSupply(lp, totalSupply, revert)
+  mockSorbetLP_getUnderlyingBalances(lp, reserve0, reserve1, revert)
+}
+
+export function mockVisorLP_getTotalAmounts(lp: string, reserve0: BigInt, reserve1: BigInt, revert: boolean): void {
+  if (revert) {
+    createMockedFunction(Address.fromString(lp), 'getTotalAmounts', 'getTotalAmounts():(uint256,uint256)')
+      .reverts()
+  } else {
+    createMockedFunction(Address.fromString(lp), 'getTotalAmounts', 'getTotalAmounts():(uint256,uint256)')
+      .returns([
+        ethereum.Value.fromUnsignedBigInt(reserve0),
+        ethereum.Value.fromUnsignedBigInt(reserve1),
+      ])
+  }
+}
+
+// ================================================================
+// UniswapV2Router mock call helpers
+// ================================================================
+export function mockUniswapV2Router_getAmountsOut(
+  router: string,
+  amountIn: BigInt,
+  path: string[],
+  amounts: BigInt[],
+  revert: boolean
+): void {
+  if (revert) {
+    createMockedFunction(Address.fromString(router), 'getAmountsOut', 'getAmountsOut(uint256,address[]):(uint256[])')
+      .withArgs([
+        ethereum.Value.fromUnsignedBigInt(amountIn),
+        ethereum.Value.fromAddressArray(path.map<Address>(addr => Address.fromString(addr)))
+      ])
+      .reverts()
+  } else {
+    createMockedFunction(Address.fromString(router), 'getAmountsOut', 'getAmountsOut(uint256,address[]):(uint256[])')
+      .withArgs([
+        ethereum.Value.fromUnsignedBigInt(amountIn),
+        ethereum.Value.fromAddressArray(path.map<Address>(addr => Address.fromString(addr)))
+      ])
+      .returns([
+        ethereum.Value.fromUnsignedBigIntArray(amounts),
+      ])
+  }
 }
 
 // ================================================================
@@ -138,74 +298,219 @@ export function createBondEntity(
   return bond
 }
 
-export const TIMESTAMP_20220101_000000: BigInt = BigInt.fromU64(1640995200)
+// ================================================================
+// BondDayData and BondHourData helpers
+// ================================================================
+export function createBondDayDataEntity(
+  id: string,
+  timestamp: BigInt,
+  bond: string,
+  userBondCount: BigInt,
+  userRedemptionCount: BigInt,
+  principalVolume: BigDecimal,
+  principalVolumeUSD: BigDecimal,
+  payoutVolume: BigDecimal,
+  payoutVolumeUSD: BigDecimal,
+  redemptionVolume: BigDecimal,
+  redemptionVolumeUSD: BigDecimal,
+  bondPriceOpen: BigDecimal,
+  bondPriceHigh: BigDecimal,
+  bondPriceLow: BigDecimal,
+  bondPriceClose: BigDecimal,
+  bondPriceUSDOpen: BigDecimal,
+  bondPriceUSDHigh: BigDecimal,
+  bondPriceUSDLow: BigDecimal,
+  bondPriceUSDClose: BigDecimal,
+): BondDayData {
+  let bondDayData = new BondDayData(id)
+  bondDayData.timestamp = timestamp
+  bondDayData.bond = bond
+  bondDayData.userBondCount = userBondCount
+  bondDayData.userRedemptionCount = userRedemptionCount
+  bondDayData.principalVolume = principalVolume
+  bondDayData.principalVolumeUSD = principalVolumeUSD
+  bondDayData.payoutVolume = payoutVolume
+  bondDayData.payoutVolumeUSD = payoutVolumeUSD
+  bondDayData.redemptionVolume = redemptionVolume
+  bondDayData.redemptionVolumeUSD = redemptionVolumeUSD
+  bondDayData.bondPriceOpen = bondPriceOpen
+  bondDayData.bondPriceHigh = bondPriceHigh
+  bondDayData.bondPriceLow = bondPriceLow
+  bondDayData.bondPriceClose = bondPriceClose
+  bondDayData.bondPriceUSDOpen = bondPriceUSDOpen
+  bondDayData.bondPriceUSDHigh = bondPriceUSDHigh
+  bondDayData.bondPriceUSDLow = bondPriceUSDLow
+  bondDayData.bondPriceUSDClose = bondPriceUSDClose
+  return bondDayData
+}
 
-export const bond_cvxmusd3CRV: Bond = createBondEntity(
-  '0xa8e5fa0072d292646d49999ef0d7f9354ec8e7a5',
-  TIMESTAMP_20220101_000000,
-  '0x9a67f1940164d0318612b497e8e6038f902a00a4',
-  'cvxmusd3CRV',
-  '0xd34d466233c5195193df712936049729140dbbd7',
-  '0x0000000000000000000000000000000000000000',
-  '0xa1c44dd91e21685a09ea30f9a9f06b2e40b99cec',
-  '0xd34d466233c5195193df712936049729140dbbd7',
-  '0xa3bed4e1c75d00fa6f4e5e6922db7261b5e9acd2',
-  BigDecimal.fromString('3.33'),
-  'ERC20'
-)
+export function assertBondDayDataEquals(expected: BondDayData, bondDayData: BondDayData): void {
+  assert.stringEquals(expected.id, bondDayData.id)
+  assert.bigIntEquals(expected.timestamp, bondDayData.timestamp)
+  assert.stringEquals(expected.bond, bondDayData.bond)
+  assert.bigIntEquals(expected.userBondCount, bondDayData.userBondCount)
+  assert.bigIntEquals(expected.userRedemptionCount, bondDayData.userRedemptionCount)
 
-export const bond_PREMIA_WETH: Bond = createBondEntity(
-  '0x100d4127e19396b117ff6ad47d2186f76f7fa50a',
-  TIMESTAMP_20220101_000000,
-  '0xc22fae86443aeed038a4ed887bba8f5035fd12f0',
-  'PREMIA-WETH',
-  '0x6399c842dd2be3de30bf99bc7d1bbf6fa3650e70',
-  '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-  '0xc26ed42e03b32e7b3e0bc3a5b5066f058ea94529',
-  '0x93e2f3a8277e0360081547d711446e4a1f83546d',
-  '0x6399c842dd2be3de30bf99bc7d1bbf6fa3650e70',
-  BigDecimal.fromString('3.33'),
-  'LP'
-)
+  assert.stringEquals(expected.principalVolume.toString(), bondDayData.principalVolume.toString())
+  assert.stringEquals(expected.principalVolumeUSD.toString(), bondDayData.principalVolumeUSD.toString())
+  assert.stringEquals(expected.payoutVolume.toString(), bondDayData.payoutVolume.toString())
+  assert.stringEquals(expected.payoutVolumeUSD.toString(), bondDayData.payoutVolumeUSD.toString())
+  assert.stringEquals(expected.redemptionVolume.toString(), bondDayData.redemptionVolume.toString())
+  assert.stringEquals(expected.redemptionVolumeUSD.toString(), bondDayData.redemptionVolumeUSD.toString())
 
-export const bond_vFLOAT_ETH: Bond = createBondEntity(
-  '0xa5c3f7a4ffb8a88bf0450d8fb847f7c6cb59d6dc',
-  TIMESTAMP_20220101_000000,
-  '0x383df49ad1f0219759a46399fe33cb7a63cd051c',
-  'FLOAT-WETH',
-  '0xb05097849bca421a3f51b249ba6cca4af4b97cb9',
-  '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-  '0x8d0aa0951854b7fd2fb0fcfad99565012f943389',
-  '0xc86b1e7fa86834cac1468937cdd53ba3ccbc1153',
-  '0xb05097849bca421a3f51b249ba6cca4af4b97cb9',
-  BigDecimal.fromString('3.33'),
-  'LP'
-)
+  assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceOpen', expected.bondPriceOpen.toString())
+  assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceHigh', expected.bondPriceHigh.toString())
+  assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceLow', expected.bondPriceLow.toString())
+  assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceClose', expected.bondPriceClose.toString())
 
-export const bond_TOKE: Bond = createBondEntity(
-  '0x836f5d135d3c1d3293dcdc473f82d4c6ceb95eec',
-  TIMESTAMP_20220101_000000,
-  '0x9e2b6378ee8ad2a4a95fe481d63caba8fb0ebbf9',
-  'TOKE',
-  '0x2e9d63788249371f1dfc918a52f8d799f4a38c94',
-  '0x0000000000000000000000000000000000000000',
-  '0xfe349fb05ee6d5598efc7bb561f7f91934167c7c',
-  '0x2e9d63788249371f1dfc918a52f8d799f4a38c94',
-  '0xd3b5d9a561c293fb42b446fe7e237daa9bf9aa84',
-  BigDecimal.fromString('3.33'),
-  'ERC20'
-)
+  assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceUSDOpen', expected.bondPriceUSDOpen.toString())
+  assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceUSDHigh', expected.bondPriceUSDHigh.toString())
+  assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceUSDLow', expected.bondPriceUSDLow.toString())
+  assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceUSDClose', expected.bondPriceUSDClose.toString())
+}
 
-export const bond_STRM_WETH: Bond = createBondEntity(
-  '0xdcfd008628be285400cee4d869e712f5f72d67cc',
-  TIMESTAMP_20220101_000000,
-  '0x4f4f6b428af559db1dbe3cb32e1e3500deffa799',
-  'STRM-WETH',
-  '0x0edf9bc41bbc1354c70e2107f80c42cae7fbbca8',
-  '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-  '0x3791cc891382704a91c55b8e5ac2b05092f95fa2',
-  '0xb301d7efb4d46528f9cf0e5c86b065fbc9f50e9a',
-  '0x0edf9bc41bbc1354c70e2107f80c42cae7fbbca8',
-  BigDecimal.fromString('3.33'),
-  'LP'
-)
+export function createBondHourDataEntity(
+  id: string,
+  timestamp: BigInt,
+  bond: string,
+  userBondCount: BigInt,
+  userRedemptionCount: BigInt,
+  principalVolume: BigDecimal,
+  principalVolumeUSD: BigDecimal,
+  payoutVolume: BigDecimal,
+  payoutVolumeUSD: BigDecimal,
+  redemptionVolume: BigDecimal,
+  redemptionVolumeUSD: BigDecimal,
+  bondPriceOpen: BigDecimal,
+  bondPriceHigh: BigDecimal,
+  bondPriceLow: BigDecimal,
+  bondPriceClose: BigDecimal,
+  bondPriceUSDOpen: BigDecimal,
+  bondPriceUSDHigh: BigDecimal,
+  bondPriceUSDLow: BigDecimal,
+  bondPriceUSDClose: BigDecimal,
+): BondHourData {
+  let bondHourData = new BondHourData(id)
+  bondHourData.timestamp = timestamp
+  bondHourData.bond = bond
+  bondHourData.userBondCount = userBondCount
+  bondHourData.userRedemptionCount = userRedemptionCount
+  bondHourData.principalVolume = principalVolume
+  bondHourData.principalVolumeUSD = principalVolumeUSD
+  bondHourData.payoutVolume = payoutVolume
+  bondHourData.payoutVolumeUSD = payoutVolumeUSD
+  bondHourData.redemptionVolume = redemptionVolume
+  bondHourData.redemptionVolumeUSD = redemptionVolumeUSD
+  bondHourData.bondPriceOpen = bondPriceOpen
+  bondHourData.bondPriceHigh = bondPriceHigh
+  bondHourData.bondPriceLow = bondPriceLow
+  bondHourData.bondPriceClose = bondPriceClose
+  bondHourData.bondPriceUSDOpen = bondPriceUSDOpen
+  bondHourData.bondPriceUSDHigh = bondPriceUSDHigh
+  bondHourData.bondPriceUSDLow = bondPriceUSDLow
+  bondHourData.bondPriceUSDClose = bondPriceUSDClose
+  return bondHourData
+}
+
+export function assertBondHourDataEquals(expected: BondHourData, bondHourData: BondHourData): void {
+  assert.stringEquals(expected.id, bondHourData.id)
+  assert.bigIntEquals(expected.timestamp, bondHourData.timestamp)
+  assert.stringEquals(expected.bond, bondHourData.bond)
+  assert.bigIntEquals(expected.userBondCount, bondHourData.userBondCount)
+  assert.bigIntEquals(expected.userRedemptionCount, bondHourData.userRedemptionCount)
+
+  assert.stringEquals(expected.principalVolume.toString(), bondHourData.principalVolume.toString())
+  assert.stringEquals(expected.principalVolumeUSD.toString(), bondHourData.principalVolumeUSD.toString())
+  assert.stringEquals(expected.payoutVolume.toString(), bondHourData.payoutVolume.toString())
+  assert.stringEquals(expected.payoutVolumeUSD.toString(), bondHourData.payoutVolumeUSD.toString())
+  assert.stringEquals(expected.redemptionVolume.toString(), bondHourData.redemptionVolume.toString())
+  assert.stringEquals(expected.redemptionVolumeUSD.toString(), bondHourData.redemptionVolumeUSD.toString())
+
+  assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceOpen', expected.bondPriceOpen.toString())
+  assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceHigh', expected.bondPriceHigh.toString())
+  assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceLow', expected.bondPriceLow.toString())
+  assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceClose', expected.bondPriceClose.toString())
+
+  assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceUSDOpen', expected.bondPriceUSDOpen.toString())
+  assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceUSDHigh', expected.bondPriceUSDHigh.toString())
+  assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceUSDLow', expected.bondPriceUSDLow.toString())
+  assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceUSDClose', expected.bondPriceUSDClose.toString())
+}
+
+// ================================================================
+// UserBond and UserRedemptions helpers
+// ================================================================
+export function createUserBondEntity(
+  id: string,
+  timestamp: BigInt,
+  bond: string,
+  user: string,
+  deposit: BigDecimal,
+  depositUSD: BigDecimal,
+  payout: BigDecimal,
+  payoutUSD: BigDecimal,
+  expires: BigInt,
+  discount: BigDecimal,
+): UserBond {
+  let userBond = new UserBond(id)
+  userBond.id = id
+  userBond.timestamp = timestamp
+  userBond.bond = bond
+  userBond.user = Bytes.fromByteArray(Bytes.fromHexString(user))
+  userBond.deposit = deposit
+  userBond.depositUSD = depositUSD
+  userBond.payout = payout
+  userBond.payoutUSD = payoutUSD
+  userBond.expires = expires
+  userBond.discount = discount
+  return userBond
+}
+
+export function assertUserBondEquals(expected: UserBond, userBond: UserBond): void {
+  assert.stringEquals(expected.id, userBond.id)
+  assert.bigIntEquals(expected.timestamp, userBond.timestamp)
+  assert.stringEquals(expected.bond, userBond.bond)
+  assert.bytesEquals(expected.user, userBond.user)
+  assert.stringEquals(expected.deposit.toString(), userBond.deposit.toString())
+  assert.stringEquals(expected.depositUSD.toString(), userBond.depositUSD.toString())
+  assert.stringEquals(expected.payout.toString(), userBond.payout.toString())
+  assert.stringEquals(expected.payoutUSD.toString(), userBond.payoutUSD.toString())
+  assert.bigIntEquals(expected.expires, userBond.expires)
+  assert.stringEquals(expected.discount.toString(), userBond.discount.toString())
+}
+
+export function createUserRedemptionEntity(
+  id: string,
+  timestamp: BigInt,
+  bond: string,
+  user: string,
+  recipient: string,
+  payout: BigDecimal,
+  payoutUSD: BigDecimal,
+  remaining: BigDecimal,
+  remainingUSD: BigDecimal,
+): UserRedemption {
+  let userRedemption = new UserRedemption(id)
+  userRedemption.id = id
+  userRedemption.timestamp = timestamp
+  userRedemption.bond = bond
+  userRedemption.user = Bytes.fromByteArray(Bytes.fromHexString(user))
+  userRedemption.recipient = Bytes.fromByteArray(Bytes.fromHexString(recipient))
+  userRedemption.payout = payout
+  userRedemption.payoutUSD = payoutUSD
+  userRedemption.remaining = remaining
+  userRedemption.remainingUSD = remainingUSD
+  return userRedemption
+}
+
+export function assertUserRedemptionEquals(expected: UserRedemption, userRedemption: UserRedemption): void {
+  assert.fieldEquals('UserRedemption', userRedemption.id, 'id', expected.id)
+  assert.fieldEquals('UserRedemption', userRedemption.id, 'timestamp', expected.timestamp.toString())
+  assert.fieldEquals('UserRedemption', userRedemption.id, 'bond', expected.bond)
+  assert.fieldEquals('UserRedemption', userRedemption.id, 'user', expected.user.toHexString())
+  assert.fieldEquals('UserRedemption', userRedemption.id, 'recipient', expected.recipient.toHexString())
+  assert.fieldEquals('UserRedemption', userRedemption.id, 'payout', expected.payout.toString())
+  assert.fieldEquals('UserRedemption', userRedemption.id, 'payoutUSD', expected.payoutUSD.toString())
+  assert.fieldEquals('UserRedemption', userRedemption.id, 'remaining', expected.remaining.toString())
+  assert.fieldEquals('UserRedemption', userRedemption.id, 'remainingUSD', expected.remainingUSD.toString())
+}

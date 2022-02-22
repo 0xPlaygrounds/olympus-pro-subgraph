@@ -78,6 +78,8 @@ templates:
           file: ./abis/CustomBondV1.json
         - name: ERC20
           file: ./abis/ERC20.json
+        - name: Hypervisor
+          file: ./abis/Hypervisor.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
         - name: UniswapRouter
@@ -107,6 +109,10 @@ templates:
           file: ./abis/ERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
+        - name: TAsset
+          file: ./abis/TAsset.json
+        - name: GUniPool
+          file: ./abis/GUniPool.json
         - name: UniswapRouter
           file: ./abis/UniswapRouter.json
       eventHandlers:

@@ -5,14 +5,17 @@ import { handleCreateBond, handleCreateBondAndTreasury } from '../src/OPFactoryV
 import { CreateBondAndTreasuryCall, CreateBondCall } from '../generated/OlympusProFactoryV2/OlympusProFactoryV2'
 import { 
   assertBondEquals,
-  bond_STRM_WETH,
-  bond_TOKE,
   mockCustomTreasury_payoutToken, 
   mockERC20_symbol, 
-  mockLPCalls, 
-  TIMESTAMP_20220101_000000
+  mockUniV2LPCalls, 
 } from './Utils'
+import {
+  bond_STRM_WETH,
+  bond_TOKE,
+  TIMESTAMP_20220101_000000
+} from './Constants'
 import { Bond } from '../generated/schema'
+import { BIGINT_ONE } from '../src/utils/Constants'
 
 // ================================================================
 // Useful constants
@@ -109,7 +112,7 @@ test('Test CreateBondAndTreasuryCall handler with ERC20 bond', () => {
   call.block.timestamp = TIMESTAMP_20220101_000000
 
   // Mock calls
-  mockLPCalls('0x2e9d63788249371f1dfc918a52f8d799f4a38c94', '', '', true)
+  mockUniV2LPCalls('0x2e9d63788249371f1dfc918a52f8d799f4a38c94', '', '', 8, BIGINT_ONE, BIGINT_ONE, BIGINT_ONE, BIGINT_ONE, true)
   mockERC20_symbol('0x2e9d63788249371f1dfc918a52f8d799f4a38c94', 'TOKE')
   mockERC20_symbol('0xd3b5d9a561c293fb42b446fe7e237daa9bf9aa84', 'tALCX')
 
@@ -139,10 +142,15 @@ test('Test CreateBondCall handler with LP bond', () => {
     '0x0edf9bc41bbc1354c70e2107f80c42cae7fbbca8',
     false
   )
-  mockLPCalls(
+  mockUniV2LPCalls(
     '0xb301d7efb4d46528f9cf0e5c86b065fbc9f50e9a',
     '0x0edf9bc41bbc1354c70e2107f80c42cae7fbbca8',
     '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+    8,
+    BIGINT_ONE,
+    BIGINT_ONE,
+    BIGINT_ONE,
+    BIGINT_ONE,
     false
   )
   mockERC20_symbol('0x0edf9bc41bbc1354c70e2107f80c42cae7fbbca8', 'STRM')

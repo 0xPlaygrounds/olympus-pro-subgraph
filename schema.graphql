@@ -170,10 +170,10 @@ type UserBond @entity {
 
   "Amount deposited, denominated in principal token"
   deposit: BigDecimal!
-  "Amount paid out, denominated in payout token"
-  payout: BigDecimal!
   "Amount deposited, denominated in USD (AT THE TIME OF BOND SALE!)"
   depositUSD: BigDecimal!
+  "Amount paid out, denominated in payout token"
+  payout: BigDecimal!
   "Amount paid out, denominated in USD (AT THE TIME OF BOND SALE!)"
   payoutUSD: BigDecimal!
 

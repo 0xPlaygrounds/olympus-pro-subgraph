@@ -5,13 +5,16 @@ import { handleCreateBond, handleCreateBondAndTreasury } from '../src/OPFactoryV
 import { CreateBondAndTreasuryCall, CreateBondCall } from '../generated/OlympusProFactoryV1/OlympusProFactoryV1'
 import { 
   assertBondEquals,
+  mockERC20_symbol, 
+  mockUniV2LPCalls, 
+} from './Utils'
+import {
   bond_cvxmusd3CRV,
   bond_vFLOAT_ETH,
-  mockERC20_symbol, 
-  mockLPCalls, 
   TIMESTAMP_20220101_000000
-} from './Utils'
+} from './Constants'
 import { Bond } from '../generated/schema'
+import { BIGINT_ONE } from '../src/utils/Constants'
 
 // ================================================================
 // Useful constants
@@ -93,7 +96,6 @@ function createCreateBondAndTreasuryCall(
 // Unit tests
 // ================================================================
 test('Test CreateBondAndTreasuryCall handler with ERC20 bond', () => {
-  // Using bond 0x1c3d0e336e2bbfd209c81fa3700cf6d46c1ebbd2 as test subject
   let call = createCreateBondAndTreasuryCall(
     '0xa3bed4e1c75d00fa6f4e5e6922db7261b5e9acd2',
     '0xd34d466233c5195193df712936049729140dbbd7',
@@ -106,11 +108,11 @@ test('Test CreateBondAndTreasuryCall handler with ERC20 bond', () => {
   call.block.timestamp = TIMESTAMP_20220101_000000
 
   // Mock calls
-  mockLPCalls('0xd34d466233c5195193df712936049729140dbbd7', '', '', true)
+  mockUniV2LPCalls('0xd34d466233c5195193df712936049729140dbbd7', '', '', 8, BIGINT_ONE, BIGINT_ONE, BIGINT_ONE, BIGINT_ONE, true)
   mockERC20_symbol('0xa3bed4e1c75d00fa6f4e5e6922db7261b5e9acd2', 'MTA')
   mockERC20_symbol('0xd34d466233c5195193df712936049729140dbbd7', 'cvxmusd3CRV')
 
-  handleCreateBondAndTreasurys([call])
+  handleCreateBondAndTreasury(call)
 
   let bond = Bond.load('0xa8e5fa0072d292646d49999ef0d7f9354ec8e7a5') as Bond
   assertBondEquals(bond, bond_cvxmusd3CRV)
@@ -118,7 +120,6 @@ test('Test CreateBondAndTreasuryCall handler with ERC20 bond', () => {
 })
 
 test('Test CreateBondCall handler with LP bond (Visor managed UniV3 LP position)', () => {
-  // Using bond 0xa5c3f7a4ffb8a88bf0450d8fb847f7c6cb59d6dc as test subject
   let call = createCreateBondCall(
     '0xb05097849bca421a3f51b249ba6cca4af4b97cb9',
     '0xc86b1e7fa86834cac1468937cdd53ba3ccbc1153',
@@ -132,16 +133,21 @@ test('Test CreateBondCall handler with LP bond (Visor managed UniV3 LP position)
   call.block.timestamp = TIMESTAMP_20220101_000000
 
   // Mock calls
-  mockLPCalls(
+  mockUniV2LPCalls(
     '0xc86b1e7fa86834cac1468937cdd53ba3ccbc1153',
     '0xb05097849bca421a3f51b249ba6cca4af4b97cb9',
     '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+    8,
+    BIGINT_ONE,
+    BIGINT_ONE,
+    BIGINT_ONE,
+    BIGINT_ONE,
     false
   )
   mockERC20_symbol('0xb05097849bca421a3f51b249ba6cca4af4b97cb9', 'FLOAT')
   mockERC20_symbol('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', 'WETH')
 
-  handleCreateBonds([call])
+  handleCreateBond(call)
 
   let bond = Bond.load('0xa5c3f7a4ffb8a88bf0450d8fb847f7c6cb59d6dc') as Bond
   assertBondEquals(bond, bond_vFLOAT_ETH)

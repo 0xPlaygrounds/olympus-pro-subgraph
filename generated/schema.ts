@@ -672,8 +672,8 @@ export class UserBond extends Entity {
     this.set("bond", Value.fromString(""));
     this.set("user", Value.fromBytes(Bytes.empty()));
     this.set("deposit", Value.fromBigDecimal(BigDecimal.zero()));
-    this.set("payout", Value.fromBigDecimal(BigDecimal.zero()));
     this.set("depositUSD", Value.fromBigDecimal(BigDecimal.zero()));
+    this.set("payout", Value.fromBigDecimal(BigDecimal.zero()));
     this.set("payoutUSD", Value.fromBigDecimal(BigDecimal.zero()));
     this.set("expires", Value.fromBigInt(BigInt.zero()));
     this.set("discount", Value.fromBigDecimal(BigDecimal.zero()));
@@ -741,15 +741,6 @@ export class UserBond extends Entity {
     this.set("deposit", Value.fromBigDecimal(value));
   }
 
-  get payout(): BigDecimal {
-    let value = this.get("payout");
-    return value!.toBigDecimal();
-  }
-
-  set payout(value: BigDecimal) {
-    this.set("payout", Value.fromBigDecimal(value));
-  }
-
   get depositUSD(): BigDecimal {
     let value = this.get("depositUSD");
     return value!.toBigDecimal();
@@ -757,6 +748,15 @@ export class UserBond extends Entity {
 
   set depositUSD(value: BigDecimal) {
     this.set("depositUSD", Value.fromBigDecimal(value));
+  }
+
+  get payout(): BigDecimal {
+    let value = this.get("payout");
+    return value!.toBigDecimal();
+  }
+
+  set payout(value: BigDecimal) {
+    this.set("payout", Value.fromBigDecimal(value));
   }
 
   get payoutUSD(): BigDecimal {
