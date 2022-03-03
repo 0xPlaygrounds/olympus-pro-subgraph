@@ -78,12 +78,20 @@ templates:
           file: ./abis/CustomBondV1.json
         - name: ERC20
           file: ./abis/ERC20.json
-        - name: Hypervisor
-          file: ./abis/Hypervisor.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
         - name: UniswapRouter
           file: ./abis/UniswapRouter.json
+        - name: OffchainOracle
+          file: ./abis/OffchainOracle.json
+
+        # Special cases
+        - name: Hypervisor
+          file: ./abis/Hypervisor.json
+        - name: TAsset
+          file: ./abis/TAsset.json
+        - name: GUniPool
+          file: ./abis/GUniPool.json
       eventHandlers:
         - event: BondCreated(uint256,uint256,uint256)
           handler: handleBondCreated
@@ -109,12 +117,18 @@ templates:
           file: ./abis/ERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
+        - name: UniswapRouter
+          file: ./abis/UniswapRouter.json
+        - name: OffchainOracle
+          file: ./abis/OffchainOracle.json
+
+        # Special cases
+        - name: Hypervisor
+          file: ./abis/Hypervisor.json
         - name: TAsset
           file: ./abis/TAsset.json
         - name: GUniPool
           file: ./abis/GUniPool.json
-        - name: UniswapRouter
-          file: ./abis/UniswapRouter.json
       eventHandlers:
         - event: BondCreated(uint256,uint256,uint256)
           handler: handleBondCreated

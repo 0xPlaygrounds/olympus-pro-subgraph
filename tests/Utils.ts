@@ -1,7 +1,7 @@
 import { Address, BigDecimal, BigInt, Bytes, ethereum, store, Value } from '@graphprotocol/graph-ts'
 import { assert, createMockedFunction } from "matchstick-as";
 import { Bond, BondDayData, BondHourData, UserBond, UserRedemption } from '../generated/schema';
-import { BIGINT_ONE } from '../src/utils/Constants';
+import { BIGINT_ONE, ONE_INCH_ROUTER_ADDRESS } from '../src/utils/Constants';
 
 // ================================================================
 // LP mock call helpers
@@ -162,6 +162,34 @@ export function mockVisorLP_getTotalAmounts(lp: string, reserve0: BigInt, reserv
   }
 }
 
+export function mock1InchOffchainOracle_getRate(
+  tokenIn: string,
+  tokenOut: string,
+  useWrappers: boolean,
+  price: BigInt,
+  reverts: boolean
+): void {
+  if (reverts) {
+    createMockedFunction(ONE_INCH_ROUTER_ADDRESS, 'getRate', 'getRate(address,address,bool):(uint256)')
+      .withArgs([
+        ethereum.Value.fromAddress(Address.fromString(tokenIn)),
+        ethereum.Value.fromAddress(Address.fromString(tokenOut)),
+        ethereum.Value.fromBoolean(useWrappers)
+      ])
+      .reverts()
+  } else {
+    createMockedFunction(ONE_INCH_ROUTER_ADDRESS, 'getRate', 'getRate(address,address,bool):(uint256)')
+      .withArgs([
+        ethereum.Value.fromAddress(Address.fromString(tokenIn)),
+        ethereum.Value.fromAddress(Address.fromString(tokenOut)),
+        ethereum.Value.fromBoolean(useWrappers)
+      ])
+      .returns([
+        ethereum.Value.fromUnsignedBigInt(price),
+      ])
+  }
+}
+
 // ================================================================
 // UniswapV2Router mock call helpers
 // ================================================================
@@ -247,24 +275,31 @@ export function assertBondEquals(bond: Bond, expected: Bond): void {
   assert.bytesEquals(bond.owner, expected.owner)
   assert.stringEquals(bond.name, expected.name)
   assert.bytesEquals(bond.token0, expected.token0)
-  assert.bytesEquals(bond.token1, expected.token1)
+  
+  if (expected.token1) {
+    assert.fieldEquals('Bond', bond.id, 'token1', (<Bytes>expected.token1).toHexString())
+  } else {
+    assert.fieldEquals('Bond', bond.id, 'token1', 'null')
+  }
+
   assert.bytesEquals(bond.treasury, expected.treasury)
-  assert.bytesEquals(bond.principleToken, expected.principleToken)
+  assert.bytesEquals(bond.principalToken, expected.principalToken)
   assert.bytesEquals(bond.payoutToken, expected.payoutToken)
   assert.stringEquals(bond.fees.toString(), expected.fees.toString())
   assert.stringEquals(bond.type, expected.type)
-  assert.bigIntEquals(bond.userBondCount, expected.userBondCount)
-  if (expected.latestUserBond) {
-    assert.stringEquals(bond.latestUserBond as string, expected.latestUserBond as string)
+
+  assert.fieldEquals('Bond', bond.id, 'userBondCount', expected.userBondCount.toString())
+  if (bond.latestUserBond) {
+    assert.fieldEquals('Bond', bond.id, 'latestUserBond', <string>expected.latestUserBond)
   } else {
-    assert.assertNull(bond.latestUserBond)
+    assert.fieldEquals('Bond', bond.id, 'latestUserBond', 'null')
   }
-  // assert.arrayEquals(bond.userBonds, expected.userBonds)
-  assert.bigIntEquals(bond.userRedemptionCount, expected.userRedemptionCount)
-  if (expected.latestUserRedemption) {
-    assert.stringEquals(bond.latestUserRedemption as string, expected.latestUserRedemption as string)
+
+  assert.fieldEquals('Bond', bond.id, 'userRedemptionCount', expected.userRedemptionCount.toString())
+  if (bond.latestUserRedemption) {
+    assert.fieldEquals('Bond', bond.id, 'latestUserRedemption', <string>expected.latestUserRedemption)
   } else {
-    assert.assertNull(bond.latestUserRedemption)
+    assert.fieldEquals('Bond', bond.id, 'latestUserRedemption', 'null')
   }
   // assert.arrayEquals(bond.userRedemptions, expected.userRedemptions)
   // assert.arrayEquals(bond.bondDayData, expected.bondDayData)
@@ -277,9 +312,9 @@ export function createBondEntity(
   owner: string,
   name: string,
   token0: string,
-  token1: string,
+  token1: string | null,
   treasury: string,
-  principleToken: string,
+  principalToken: string,
   payoutToken: string,
   fees: BigDecimal,
   type: string
@@ -289,9 +324,13 @@ export function createBondEntity(
   bond.owner = Address.fromString(owner)
   bond.name = name
   bond.token0 = Address.fromString(token0)
-  bond.token1 = Address.fromString(token1)
+  if (token1) {
+    bond.token1 = Address.fromString(<string>token1)
+  } else {
+    bond.token1 = null
+  }
   bond.treasury = Address.fromString(treasury)
-  bond.principleToken = Address.fromString(principleToken)
+  bond.principalToken = Address.fromString(principalToken)
   bond.payoutToken = Address.fromString(payoutToken)
   bond.fees = fees
   bond.type = type
@@ -345,28 +384,54 @@ export function createBondDayDataEntity(
 }
 
 export function assertBondDayDataEquals(expected: BondDayData, bondDayData: BondDayData): void {
-  assert.stringEquals(expected.id, bondDayData.id)
-  assert.bigIntEquals(expected.timestamp, bondDayData.timestamp)
-  assert.stringEquals(expected.bond, bondDayData.bond)
-  assert.bigIntEquals(expected.userBondCount, bondDayData.userBondCount)
-  assert.bigIntEquals(expected.userRedemptionCount, bondDayData.userRedemptionCount)
+  assert.fieldEquals('BondDayData', bondDayData.id, 'id', expected.id)
+  assert.fieldEquals('BondDayData', bondDayData.id, 'timestamp', expected.timestamp.toString())
+  assert.fieldEquals('BondDayData', bondDayData.id, 'bond', expected.bond)
+  assert.fieldEquals('BondDayData', bondDayData.id, 'userBondCount', expected.userBondCount.toString())
+  assert.fieldEquals('BondDayData', bondDayData.id, 'userRedemptionCount', expected.userRedemptionCount.toString())
 
-  assert.stringEquals(expected.principalVolume.toString(), bondDayData.principalVolume.toString())
-  assert.stringEquals(expected.principalVolumeUSD.toString(), bondDayData.principalVolumeUSD.toString())
-  assert.stringEquals(expected.payoutVolume.toString(), bondDayData.payoutVolume.toString())
-  assert.stringEquals(expected.payoutVolumeUSD.toString(), bondDayData.payoutVolumeUSD.toString())
-  assert.stringEquals(expected.redemptionVolume.toString(), bondDayData.redemptionVolume.toString())
-  assert.stringEquals(expected.redemptionVolumeUSD.toString(), bondDayData.redemptionVolumeUSD.toString())
+  if (expected.principalVolumeUSD){
+    assert.fieldEquals('BondDayData', bondDayData.id, 'principalVolumeUSD', (<BigDecimal>expected.principalVolumeUSD).toString())
+  } else {
+    assert.fieldEquals('BondDayData', bondDayData.id, 'principalVolumeUSD', 'null')
+  }
+  assert.fieldEquals('BondDayData', bondDayData.id, 'principalVolume', expected.principalVolume.toString())
+  if (expected.payoutVolumeUSD){
+    assert.fieldEquals('BondDayData', bondDayData.id, 'payoutVolumeUSD', (<BigDecimal>expected.payoutVolumeUSD).toString())
+  } else {
+    assert.fieldEquals('BondDayData', bondDayData.id, 'payoutVolumeUSD', 'null')
+  }
+  assert.fieldEquals('BondDayData', bondDayData.id, 'payoutVolume', expected.payoutVolume.toString())
+  if (expected.redemptionVolumeUSD){
+    assert.fieldEquals('BondDayData', bondDayData.id, 'redemptionVolumeUSD', (<BigDecimal>expected.redemptionVolumeUSD).toString())
+  } else {
+    assert.fieldEquals('BondDayData', bondDayData.id, 'redemptionVolumeUSD', 'null')
+  }
+  assert.fieldEquals('BondDayData', bondDayData.id, 'redemptionVolume', expected.redemptionVolume.toString())
 
-  assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceOpen', expected.bondPriceOpen.toString())
-  assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceHigh', expected.bondPriceHigh.toString())
-  assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceLow', expected.bondPriceLow.toString())
-  assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceClose', expected.bondPriceClose.toString())
+  if (expected.bondPriceOpen) {
+    assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceOpen', (<BigDecimal>expected.bondPriceOpen).toString())
+    assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceHigh', (<BigDecimal>expected.bondPriceHigh).toString())
+    assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceLow', (<BigDecimal>expected.bondPriceLow).toString())
+    assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceClose', (<BigDecimal>expected.bondPriceClose).toString())
+  } else {
+    assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceOpen', 'null')
+    assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceHigh', 'null')
+    assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceLow', 'null')
+    assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceClose', 'null')
+  }
 
-  assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceUSDOpen', expected.bondPriceUSDOpen.toString())
-  assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceUSDHigh', expected.bondPriceUSDHigh.toString())
-  assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceUSDLow', expected.bondPriceUSDLow.toString())
-  assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceUSDClose', expected.bondPriceUSDClose.toString())
+  if (expected.bondPriceUSDOpen) {
+    assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceUSDOpen', (<BigDecimal>expected.bondPriceUSDOpen).toString())
+    assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceUSDHigh', (<BigDecimal>expected.bondPriceUSDHigh).toString())
+    assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceUSDLow', (<BigDecimal>expected.bondPriceUSDLow).toString())
+    assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceUSDClose', (<BigDecimal>expected.bondPriceUSDClose).toString())
+  } else {
+    assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceUSDOpen', 'null')
+    assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceUSDHigh', 'null')
+    assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceUSDLow', 'null')
+    assert.fieldEquals('BondDayData', bondDayData.id, 'bondPriceUSDClose', 'null')
+  }
 }
 
 export function createBondHourDataEntity(
@@ -413,28 +478,54 @@ export function createBondHourDataEntity(
 }
 
 export function assertBondHourDataEquals(expected: BondHourData, bondHourData: BondHourData): void {
-  assert.stringEquals(expected.id, bondHourData.id)
-  assert.bigIntEquals(expected.timestamp, bondHourData.timestamp)
-  assert.stringEquals(expected.bond, bondHourData.bond)
-  assert.bigIntEquals(expected.userBondCount, bondHourData.userBondCount)
-  assert.bigIntEquals(expected.userRedemptionCount, bondHourData.userRedemptionCount)
+  assert.fieldEquals('BondHourData', bondHourData.id, 'id', expected.id)
+  assert.fieldEquals('BondHourData', bondHourData.id, 'timestamp', expected.timestamp.toString())
+  assert.fieldEquals('BondHourData', bondHourData.id, 'bond', expected.bond)
+  assert.fieldEquals('BondHourData', bondHourData.id, 'userBondCount', expected.userBondCount.toString())
+  assert.fieldEquals('BondHourData', bondHourData.id, 'userRedemptionCount', expected.userRedemptionCount.toString())
 
-  assert.stringEquals(expected.principalVolume.toString(), bondHourData.principalVolume.toString())
-  assert.stringEquals(expected.principalVolumeUSD.toString(), bondHourData.principalVolumeUSD.toString())
-  assert.stringEquals(expected.payoutVolume.toString(), bondHourData.payoutVolume.toString())
-  assert.stringEquals(expected.payoutVolumeUSD.toString(), bondHourData.payoutVolumeUSD.toString())
-  assert.stringEquals(expected.redemptionVolume.toString(), bondHourData.redemptionVolume.toString())
-  assert.stringEquals(expected.redemptionVolumeUSD.toString(), bondHourData.redemptionVolumeUSD.toString())
+  if (expected.principalVolumeUSD){
+    assert.fieldEquals('BondHourData', bondHourData.id, 'principalVolumeUSD', (<BigDecimal>expected.principalVolumeUSD).toString())
+  } else {
+    assert.fieldEquals('BondHourData', bondHourData.id, 'principalVolumeUSD', 'null')
+  }
+  assert.fieldEquals('BondHourData', bondHourData.id, 'principalVolume', expected.principalVolume.toString())
+  if (expected.payoutVolumeUSD){
+    assert.fieldEquals('BondHourData', bondHourData.id, 'payoutVolumeUSD', (<BigDecimal>expected.payoutVolumeUSD).toString())
+  } else {
+    assert.fieldEquals('BondHourData', bondHourData.id, 'payoutVolumeUSD', 'null')
+  }
+  assert.fieldEquals('BondHourData', bondHourData.id, 'payoutVolume', expected.payoutVolume.toString())
+  if (expected.redemptionVolumeUSD){
+    assert.fieldEquals('BondHourData', bondHourData.id, 'redemptionVolumeUSD', (<BigDecimal>expected.redemptionVolumeUSD).toString())
+  } else {
+    assert.fieldEquals('BondHourData', bondHourData.id, 'redemptionVolumeUSD', 'null')
+  }
+  assert.fieldEquals('BondHourData', bondHourData.id, 'redemptionVolume', expected.redemptionVolume.toString())
 
-  assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceOpen', expected.bondPriceOpen.toString())
-  assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceHigh', expected.bondPriceHigh.toString())
-  assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceLow', expected.bondPriceLow.toString())
-  assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceClose', expected.bondPriceClose.toString())
+  if (expected.bondPriceOpen) {
+    assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceOpen', (<BigDecimal>expected.bondPriceOpen).toString())
+    assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceHigh', (<BigDecimal>expected.bondPriceHigh).toString())
+    assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceLow', (<BigDecimal>expected.bondPriceLow).toString())
+    assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceClose', (<BigDecimal>expected.bondPriceClose).toString())
+  } else {
+    assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceOpen', 'null')
+    assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceHigh', 'null')
+    assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceLow', 'null')
+    assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceClose', 'null')
+  }
 
-  assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceUSDOpen', expected.bondPriceUSDOpen.toString())
-  assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceUSDHigh', expected.bondPriceUSDHigh.toString())
-  assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceUSDLow', expected.bondPriceUSDLow.toString())
-  assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceUSDClose', expected.bondPriceUSDClose.toString())
+  if (expected.bondPriceUSDOpen) {
+    assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceUSDOpen', (<BigDecimal>expected.bondPriceUSDOpen).toString())
+    assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceUSDHigh', (<BigDecimal>expected.bondPriceUSDHigh).toString())
+    assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceUSDLow', (<BigDecimal>expected.bondPriceUSDLow).toString())
+    assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceUSDClose', (<BigDecimal>expected.bondPriceUSDClose).toString())
+  } else {
+    assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceUSDOpen', 'null')
+    assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceUSDHigh', 'null')
+    assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceUSDLow', 'null')
+    assert.fieldEquals('BondHourData', bondHourData.id, 'bondPriceUSDClose', 'null')
+  }
 }
 
 // ================================================================
@@ -467,16 +558,33 @@ export function createUserBondEntity(
 }
 
 export function assertUserBondEquals(expected: UserBond, userBond: UserBond): void {
-  assert.stringEquals(expected.id, userBond.id)
-  assert.bigIntEquals(expected.timestamp, userBond.timestamp)
-  assert.stringEquals(expected.bond, userBond.bond)
-  assert.bytesEquals(expected.user, userBond.user)
-  assert.stringEquals(expected.deposit.toString(), userBond.deposit.toString())
-  assert.stringEquals(expected.depositUSD.toString(), userBond.depositUSD.toString())
-  assert.stringEquals(expected.payout.toString(), userBond.payout.toString())
-  assert.stringEquals(expected.payoutUSD.toString(), userBond.payoutUSD.toString())
-  assert.bigIntEquals(expected.expires, userBond.expires)
-  assert.stringEquals(expected.discount.toString(), userBond.discount.toString())
+  assert.fieldEquals('UserBond', userBond.id, 'id', expected.id)
+  assert.fieldEquals('UserBond', userBond.id, 'timestamp', expected.timestamp.toString())
+  assert.fieldEquals('UserBond', userBond.id, 'bond', expected.bond)
+  assert.fieldEquals('UserBond', userBond.id, 'user', expected.user.toHexString())
+
+  assert.fieldEquals('UserBond', userBond.id, 'deposit', expected.deposit.toString())
+  if (expected.depositUSD) {
+    assert.fieldEquals('UserBond', userBond.id, 'depositUSD', (<BigDecimal>expected.depositUSD).toString())
+  } else {
+    assert.fieldEquals('UserBond', userBond.id, 'depositUSD', 'null')
+  }
+
+  assert.fieldEquals('UserBond', userBond.id, 'payout', expected.payout.toString())
+  if (expected.payoutUSD) {
+    assert.fieldEquals('UserBond', userBond.id, 'payoutUSD', (<BigDecimal>expected.payoutUSD).toString())
+  } else {
+    assert.fieldEquals('UserBond', userBond.id, 'payoutUSD', 'null')
+  }
+
+  assert.fieldEquals('UserBond', userBond.id, 'expires', expected.expires.toString())
+  assert.fieldEquals('UserBond', userBond.id, 'expiresTimestamp', expected.expiresTimestamp.toString())
+
+  if (expected.discount) {
+    assert.fieldEquals('UserBond', userBond.id, 'discount', (<BigDecimal>expected.discount).toString())
+  } else {
+    assert.fieldEquals('UserBond', userBond.id, 'discount', 'null')
+  }
 }
 
 export function createUserRedemptionEntity(
@@ -509,8 +617,18 @@ export function assertUserRedemptionEquals(expected: UserRedemption, userRedempt
   assert.fieldEquals('UserRedemption', userRedemption.id, 'bond', expected.bond)
   assert.fieldEquals('UserRedemption', userRedemption.id, 'user', expected.user.toHexString())
   assert.fieldEquals('UserRedemption', userRedemption.id, 'recipient', expected.recipient.toHexString())
+
   assert.fieldEquals('UserRedemption', userRedemption.id, 'payout', expected.payout.toString())
-  assert.fieldEquals('UserRedemption', userRedemption.id, 'payoutUSD', expected.payoutUSD.toString())
+  if (expected.payoutUSD) {
+    assert.fieldEquals('UserRedemption', userRedemption.id, 'payoutUSD', (<BigDecimal>expected.payoutUSD).toString())
+  } else {
+    assert.fieldEquals('UserRedemption', userRedemption.id, 'payoutUSD', 'null')
+  }
+
   assert.fieldEquals('UserRedemption', userRedemption.id, 'remaining', expected.remaining.toString())
-  assert.fieldEquals('UserRedemption', userRedemption.id, 'remainingUSD', expected.remainingUSD.toString())
+  if (expected.remainingUSD) {
+    assert.fieldEquals('UserRedemption', userRedemption.id, 'remainingUSD', (<BigDecimal>expected.remainingUSD).toString())
+  } else {
+    assert.fieldEquals('UserRedemption', userRedemption.id, 'remainingUSD', 'null')
+  }
 }

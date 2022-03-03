@@ -38,7 +38,7 @@ function handleCreateBondAndTreasurys(calls: CreateBondAndTreasuryCall[]): void 
 }
 
 function createCreateBondCall(
-  input_principleToken: string,
+  input_principalToken: string,
   input_customTreasury: string,
   input_initialOwner: string,
   input_tierCeilings: Array<BigInt>,
@@ -51,7 +51,7 @@ function createCreateBondCall(
   
   // Push input values
   newCreateBondCall.inputValues = new Array()
-  newCreateBondCall.inputValues.push(new ethereum.EventParam('_principleToken', ethereum.Value.fromAddress(Address.fromString(input_principleToken))))
+  newCreateBondCall.inputValues.push(new ethereum.EventParam('_principalToken', ethereum.Value.fromAddress(Address.fromString(input_principalToken))))
   newCreateBondCall.inputValues.push(new ethereum.EventParam('_customTreasury', ethereum.Value.fromAddress(Address.fromString(input_customTreasury))))
   newCreateBondCall.inputValues.push(new ethereum.EventParam('_initialOwner', ethereum.Value.fromAddress(Address.fromString(input_initialOwner))))
   newCreateBondCall.inputValues.push(new ethereum.EventParam('_tierCeilings', ethereum.Value.fromSignedBigIntArray(input_tierCeilings)))
@@ -68,7 +68,7 @@ function createCreateBondCall(
 
 function createCreateBondAndTreasuryCall(
   input_payoutToken: string,
-  input_principleToken: string,
+  input_principalToken: string,
   input_initialOwner: string,
   input_tierCeilings: Array<BigInt>,
   input_fees: Array<BigInt>,
@@ -81,7 +81,7 @@ function createCreateBondAndTreasuryCall(
   // Push input values
   newCreateBondAndTreasuryCall.inputValues = new Array()
   newCreateBondAndTreasuryCall.inputValues.push(new ethereum.EventParam('_payoutToken', ethereum.Value.fromAddress(Address.fromString(input_payoutToken))))
-  newCreateBondAndTreasuryCall.inputValues.push(new ethereum.EventParam('_principleToken', ethereum.Value.fromAddress(Address.fromString(input_principleToken))))
+  newCreateBondAndTreasuryCall.inputValues.push(new ethereum.EventParam('_principalToken', ethereum.Value.fromAddress(Address.fromString(input_principalToken))))
   newCreateBondAndTreasuryCall.inputValues.push(new ethereum.EventParam('_initialOwner', ethereum.Value.fromAddress(Address.fromString(input_initialOwner))))
   newCreateBondAndTreasuryCall.inputValues.push(new ethereum.EventParam('_tierCeilings', ethereum.Value.fromSignedBigIntArray(input_tierCeilings)))
   newCreateBondAndTreasuryCall.inputValues.push(new ethereum.EventParam('_fees', ethereum.Value.fromSignedBigIntArray(input_fees)))

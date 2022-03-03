@@ -19,7 +19,8 @@ import {
   mockUniV2LP_token1,
   mockUniV2LP_decimals,
   mockUniV2LP_totalSupply,
-  mockVisorLP_getTotalAmounts
+  mockVisorLP_getTotalAmounts,
+  mock1InchOffchainOracle_getRate
 } from './Utils'
 import {
   bond_cvxmusd3CRV, bond_FRAX_WETH, bond_vFLOAT_ETH,
@@ -36,6 +37,7 @@ import {
   NATIVE_TOKEN_ADDRESS, 
   NATIVE_TOKEN_DECIMALS, 
   ROUTERS, 
+  STABLE_TOKEN2_ADDRESS, 
   STABLE_TOKEN_ADDRESS, 
   STABLE_TOKEN_DECIMALS 
 } from '../src/utils/Constants'
@@ -112,30 +114,31 @@ test('Test BondCreated handler with ERC20 bond, no BondDayData, no BondHourData'
   event.transaction.hash = Bytes.fromByteArray(Bytes.fromHexString('0xe4773bdd2e478c01e7b39bb3e2f731c863bee235be6bbbd9a0f5071da9f45770'))  
 
   // Mock contract function calls
-  mockERC20_decimals(bond.principleToken.toHexString(), 18)
+  mockERC20_decimals(bond.principalToken.toHexString(), 18)
   mockERC20_decimals(bond.payoutToken.toHexString(), 18)
-  createMockedFunction(Address.fromString(bond.principleToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
+  createMockedFunction(Address.fromString(NATIVE_TOKEN_ADDRESS), 'underlyer', 'underlyer():(address)').reverts()
+  createMockedFunction(Address.fromString(bond.principalToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
   createMockedFunction(Address.fromString(bond.payoutToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
 
-  mockUniswapV2Router_getAmountsOut(
-    ROUTERS[0],
-    BigInt.fromString('1000000000000000000'),
-    [bond.principleToken.toHexString(), NATIVE_TOKEN_ADDRESS],
-    [],
-    true
-  )
-  mockUniswapV2Router_getAmountsOut(
-    ROUTERS[0],
-    BigInt.fromString('1000000000000000000'),
-    [NATIVE_TOKEN_ADDRESS, STABLE_TOKEN_ADDRESS],
-    [BigInt.fromString('1000000000000000000'), BigInt.fromString('3000000000')], // 1 ETH = 3000 USDT
+  mock1InchOffchainOracle_getRate(
+    NATIVE_TOKEN_ADDRESS, 
+    STABLE_TOKEN2_ADDRESS, 
+    false, 
+    BigInt.fromString('3000000000'),  // 1 ETH = 3000 USDC
     false
   )
-  mockUniswapV2Router_getAmountsOut(
-    ROUTERS[0],
-    BigInt.fromString('1000000000000000000'),
-    [bond.payoutToken.toHexString(), NATIVE_TOKEN_ADDRESS],
-    [BigInt.fromString('1000000000000000000'), BigInt.fromString('200000000000000')], // 1 MTA = 0.0002 ETH
+  mock1InchOffchainOracle_getRate(
+    bond.principalToken.toHexString(), 
+    STABLE_TOKEN2_ADDRESS, 
+    false, 
+    BIGINT_ONE,                       // 1 cvxmusdc3Crv reverts
+    true
+  )
+  mock1InchOffchainOracle_getRate(
+    bond.payoutToken.toHexString(), 
+    STABLE_TOKEN2_ADDRESS, 
+    false, 
+    BigInt.fromString('6000000'),    // 1 MTA = 0.6 USDC
     false
   )
 
@@ -223,11 +226,11 @@ test('Test BondCreated handler with LP bond, no BondDayData, no BondHourData', (
   event.transaction.hash = Bytes.fromByteArray(Bytes.fromHexString('0xe4773bdd2e478c01e7b39bb3e2f731c863bee235be6bbbd9a0f5071da9f45770'))  
 
   // Mock contract function calls
-  mockERC20_decimals(bond.principleToken.toHexString(), 18)
+  mockERC20_decimals(bond.principalToken.toHexString(), 18)
   mockERC20_decimals(bond.payoutToken.toHexString(), 18)
   mockERC20_decimals(bond.token0.toHexString(), 18)
-  mockERC20_decimals(bond.token1.toHexString(), 18)
-  createMockedFunction(Address.fromString(bond.principleToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
+  mockERC20_decimals((<Bytes>bond.token1).toHexString(), 18)
+  createMockedFunction(Address.fromString(bond.principalToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
   createMockedFunction(Address.fromString(bond.payoutToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
   mockUniV2LPCalls(
     '0xeC8C342bc3E07F05B9a782bc34e7f04fB9B44502',
@@ -240,25 +243,26 @@ test('Test BondCreated handler with LP bond, no BondDayData, no BondHourData', (
     BigInt.fromString('1641049813'),
     false
   )
-  mockUniswapV2Router_getAmountsOut(
-    ROUTERS[0],
-    BigInt.fromString('1000000000000000000'),
-    [NATIVE_TOKEN_ADDRESS, STABLE_TOKEN_ADDRESS],
-    [BigInt.fromString('1000000000000000000'), BigInt.fromString('3000000000')],      // 1 ETH = 3000 USDT
+
+  mock1InchOffchainOracle_getRate(
+    NATIVE_TOKEN_ADDRESS, 
+    STABLE_TOKEN2_ADDRESS, 
+    false, 
+    BigInt.fromString('3000000000'),  // 1 ETH = 3000 USDC
     false
   )
-  mockUniswapV2Router_getAmountsOut(
-    ROUTERS[0],
-    BigInt.fromString('1000000000000000000'),
-    [bond.token0.toHexString(), NATIVE_TOKEN_ADDRESS],
-    [BigInt.fromString('1000000000000000000'), BigInt.fromString('386000000000000')], // 1 FRAX = 0.000386 ETH
+  mock1InchOffchainOracle_getRate(
+    bond.token0.toHexString(), 
+    STABLE_TOKEN2_ADDRESS, 
+    false, 
+    BigInt.fromString('1158000'),     // 1 FRAX = 1.158 USDC
     false
   )
-  mockUniswapV2Router_getAmountsOut(
-    ROUTERS[0],
-    BigInt.fromString('1000000000000000000'),
-    [bond.payoutToken.toHexString(), NATIVE_TOKEN_ADDRESS],
-    [BigInt.fromString('1000000000000000000'), BigInt.fromString('7169000000000000')], // 1 FXS = 0.007169 ETH
+  mock1InchOffchainOracle_getRate(
+    bond.payoutToken.toHexString(), 
+    STABLE_TOKEN2_ADDRESS, 
+    false, 
+    BigInt.fromString('21507000'),    // 1 FXS = 21.507 USDC
     false
   )
 
@@ -346,25 +350,25 @@ test('Test BondCreated handler with Visor LP bond special case, no BondDayData, 
   event.transaction.hash = Bytes.fromByteArray(Bytes.fromHexString('0xe4773bdd2e478c01e7b39bb3e2f731c863bee235be6bbbd9a0f5071da9f45770'))  
 
   // Mock contract function calls
-  mockERC20_decimals(bond.principleToken.toHexString(), 18)
+  mockERC20_decimals(bond.principalToken.toHexString(), 18)
   mockERC20_decimals(bond.payoutToken.toHexString(), 18)
   mockERC20_decimals(bond.token0.toHexString(), 18)
-  mockERC20_decimals(bond.token1.toHexString(), 18)
-  createMockedFunction(Address.fromString(bond.principleToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
+  mockERC20_decimals((<Bytes>bond.token1).toHexString(), 18)
+  createMockedFunction(Address.fromString(bond.principalToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
   createMockedFunction(Address.fromString(bond.payoutToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
   
-  mockUniV2LP_getReserves(bond.principleToken.toHexString(), BIGINT_ZERO, BIGINT_ZERO, BIGINT_ZERO, true)
-  mockSorbetLP_getUnderlyingBalances(bond.principleToken.toHexString(), BIGINT_ZERO, BIGINT_ZERO, true)
+  mockUniV2LP_getReserves(bond.principalToken.toHexString(), BIGINT_ZERO, BIGINT_ZERO, BIGINT_ZERO, true)
+  mockSorbetLP_getUnderlyingBalances(bond.principalToken.toHexString(), BIGINT_ZERO, BIGINT_ZERO, true)
   mockVisorLP_getTotalAmounts(
-    bond.principleToken.toHexString(),
+    bond.principalToken.toHexString(),
     BigInt.fromString('77649501981662641700186'),
     BigInt.fromString('93964363188639278404'),
     false
   )
-  mockUniV2LP_token0(bond.principleToken.toHexString(), bond.token0.toHexString(), false)
-  mockUniV2LP_token1(bond.principleToken.toHexString(), bond.token1.toHexString(), false)
-  mockUniV2LP_decimals(bond.principleToken.toHexString(), 18, false)
-  mockUniV2LP_totalSupply(bond.principleToken.toHexString(), BigInt.fromString('115180416638624466554'), false)
+  mockUniV2LP_token0(bond.principalToken.toHexString(), bond.token0.toHexString(), false)
+  mockUniV2LP_token1(bond.principalToken.toHexString(), (<Bytes>bond.token1).toHexString(), false)
+  mockUniV2LP_decimals(bond.principalToken.toHexString(), 18, false)
+  mockUniV2LP_totalSupply(bond.principalToken.toHexString(), BigInt.fromString('115180416638624466554'), false)
   
   mockUniswapV2Router_getAmountsOut(
     ROUTERS[0],
@@ -513,15 +517,15 @@ test('Test BondCreated handler with LP bond, existing BondDayData, existing Bond
 
   // Mock contract function calls
   mockERC20_decimals(bond.payoutToken.toHexString(), 18)
-  mockERC20_decimals(bond.principleToken.toHexString(), 18)
+  mockERC20_decimals(bond.principalToken.toHexString(), 18)
   mockERC20_decimals(bond.token0.toHexString(), 18)
-  mockERC20_decimals(bond.token1.toHexString(), 18)
-  createMockedFunction(Address.fromString(bond.principleToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
+  mockERC20_decimals((<Bytes>bond.token1).toHexString(), 18)
+  createMockedFunction(Address.fromString(bond.principalToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
   createMockedFunction(Address.fromString(bond.payoutToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
   mockUniV2LPCalls(
-    bond.principleToken.toHexString(),
+    bond.principalToken.toHexString(),
     bond.token0.toHexString(),
-    bond.token1.toHexString(),
+    (<Bytes>bond.token1).toHexString(),
     18,
     BigInt.fromString('47713220179037740672178'),
     BigInt.fromString('2722104478852355060737355'),
@@ -635,16 +639,16 @@ test('Test BondRedemption handler with LP bond, no BondDayData, no BondHourData'
   purchase.transaction.hash = Bytes.fromByteArray(Bytes.fromHexString('0xe4773bdd2e478c01e7b39bb3e2f731c863bee235be6bbbd9a0f5071da9f45770'))  
 
   // Mock contract function calls
-  mockERC20_decimals(bond.principleToken.toHexString(), 18)
+  mockERC20_decimals(bond.principalToken.toHexString(), 18)
   mockERC20_decimals(bond.payoutToken.toHexString(), 18)
   mockERC20_decimals(bond.token0.toHexString(), 18)
-  mockERC20_decimals(bond.token1.toHexString(), 18)
-  createMockedFunction(Address.fromString(bond.principleToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
+  mockERC20_decimals((<Bytes>bond.token1).toHexString(), 18)
+  createMockedFunction(Address.fromString(bond.principalToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
   createMockedFunction(Address.fromString(bond.payoutToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
   mockUniV2LPCalls(
-    bond.principleToken.toHexString(),
+    bond.principalToken.toHexString(),
     bond.token0.toHexString(),
-    bond.token1.toHexString(),
+    (<Bytes>bond.token1).toHexString(),
     18,
     BigInt.fromString('47713220179037740672178'),
     BigInt.fromString('2722104478852355060737355'),

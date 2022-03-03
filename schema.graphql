@@ -5,48 +5,97 @@
 The Bond entity stores data about a single custom bond
 """
 type Bond @entity {
-  "Bond contract address"
+  """
+  Bond contract address
+  """
   id: ID!
 
-  "Timestamp at which the bond contract was created using the Olympus Pro factory contract"
+  """
+  Timestamp at which the bond contract was created using the Olympus Pro factory contract
+  """
   createdAtTimestamp: BigInt!
 
+  """
+  Bond owner, as specified at bond contract creation
+  """
   owner: Bytes!
 
-  "Name of the bond"
+  """
+  Name of the bond, token symbol in the case of ERC20 bond, concatenated token symbols in 
+  the case of LP token bond (e.g.: X-Y for LP tokens of token X and token Y)
+  """
   name: String!
-  token0: Bytes!
-  token1: Bytes!
 
-  "Address of the treasury contract to which the bonded assets are sent"
+  """
+  Address of the first token of the LP bonded asset. In the case of ERC20 bonds, this is 
+  the same value as 'principalToken'
+  """
+  token0: Bytes!
+
+  """
+  Address of the second token of the LP bonded asset. In the case of ERC20 bonds, this 
+  value is 'null'
+  """
+  token1: Bytes
+
+  """
+  Address of the treasury contract to which the bonded assets are sent
+  """
   treasury: Bytes!
 
-  "Principle token address, i.e.: the token that is bonded"
-  principleToken: Bytes!
+  """
+  Principal token address, i.e.: the token that is bonded
+  """
+  principalToken: Bytes!
   
-  "Payout token address, i.e.: the token users receive"
+  """
+  Payout token address, i.e.: the token users receive
+  """
   payoutToken: Bytes! 
 
+  """
+  Fee percentage
+  """
   fees: BigDecimal!
+
+  """
+  Either 'ERC20' or 'LP', indicating the type of asset being bonded
+  """
   type: String!
 
-  "Total number of user bond purchases"
+  """
+  Total number of user bond purchases
+  """
   userBondCount: BigInt!
-  "Latest bond purchase, if any"
+  """
+  Latest bond purchase, if any
+  """
   latestUserBond: UserBond
-  "User bond purchases for this bond"
+  """
+  User bond purchases for this bond
+  """
   userBonds: [UserBond!]! @derivedFrom(field: "bond")
 
-  "Total number of user bond redemptions"
+  """
+  Total number of user bond redemptions
+  """
   userRedemptionCount: BigInt!
-  "Latest bond redemption, if any"
-  latestUserRedemption: UserBond
-  "User bond redemptions for this bond"
+  """
+  Latest bond redemption, if any
+  """
+  latestUserRedemption: UserRedemption
+  """
+  User bond redemptions for this bond
+  """
   userRedemptions: [UserRedemption!]! @derivedFrom(field: "bond")
 
-  "Daily stats for this bond"
+  """
+  Daily stats for this bond
+  """
   dailyData: [BondDayData!]! @derivedFrom(field: "bond")
-  "Hourly stats for this bond"
+  """
+  Hourly stats for this bond
+  """
   hourlyData: [BondHourData!]! @derivedFrom(field: "bond")
 }
 
@@ -55,49 +104,98 @@ The BondDayData entity stores data that is accumulated
 and condensed into day stats for each bond
 """
 type BondDayData @entity {
-  id: ID!   # BOND_ADDRESS-TIMESTAMP
+  """
+  Concatenation of the bond's 'id' and the 'timestamp' field, seperated by '-'
+  """
+  id: ID!
 
-  "Timestamp indicating the start of the period"
+  """
+  Timestamp indicating the start of the period
+  """
   timestamp: BigInt!
 
-  "The bond related to these stats"
+  """
+  The bond related to these stats
+  """
   bond: Bond!
 
-  "Total number of bond purchases during the period"
+  """
+  Total number of bond purchases during the period
+  """
   userBondCount: BigInt!
-  "Total number of bond redemptions during the period"
+  """
+  Total number of bond redemptions during the period
+  """
   userRedemptionCount: BigInt!
 
-  "Total principle tokens that were bonded during the period"
+  """
+  Total principal tokens that were bonded during the period
+  """
   principalVolume: BigDecimal!
-  "Total value of principle tokens that were bonded during the period"
-  principalVolumeUSD: BigDecimal!
-  "Total payout tokens that were paid out as bonds during the period"
+  """
+  Total value of principal tokens in USD (at time of bonding) that were bonded during the period.
+  'null' if USD price was unavailable
+  """
+  principalVolumeUSD: BigDecimal
+  """
+  Total payout tokens that were paid out as bonds during the period
+  """
   payoutVolume: BigDecimal!
-  "Total value of tokens that were paid out as bonds during the period"
-  payoutVolumeUSD: BigDecimal!
-  "Total payout tokens that were redeemed during the period"
+  """
+  Total value of payout tokens in USD (at time of bonding) that were payed out during the period.
+  'null' if USD price was unavailable
+  """
+  payoutVolumeUSD: BigDecimal
+  """
+  Total payout tokens that were redeemed during the period
+  """
   redemptionVolume: BigDecimal!
-  "Total value of payout tokens that were redeemed during the period"
-  redemptionVolumeUSD: BigDecimal!
+  """
+  Total value of payout tokens in USD (at time of redemption) that were redeemed during the period.
+  'null' if USD price was unavailable
+  """
+  redemptionVolumeUSD: BigDecimal
 
-  "Opening of the period. Unit price of payout tokens denominated in principle token"
-  bondPriceOpen: BigDecimal!
-  "Highest of the period. Unit price of payout tokens denominated in principle token"
-  bondPriceHigh: BigDecimal!
-  "Lowest of the period. Unit price of payout tokens denominated in principle token"
-  bondPriceLow: BigDecimal!
-  "Closing of the period. Unit price of payout tokens denominated in principle token"
-  bondPriceClose: BigDecimal!
+  """
+  Opening of the period. Unit price of payout tokens denominated in principal token.
+  'null' if no bond purchases were made during the period
+  """
+  bondPriceOpen: BigDecimal
+  """Highest of the period. Unit price of payout tokens denominated in principal token.
+  'null' if no bond purchases were made during the period
+  """
+  bondPriceHigh: BigDecimal
+  """
+  Lowest of the period. Unit price of payout tokens denominated in principal token.
+  'null' if no bond purchases were made during the period
+  """
+  bondPriceLow: BigDecimal
+  """
+  Closing of the period. Unit price of payout tokens denominated in principal token.
+  'null' if no bond purchases were made during the period
+  """
+  bondPriceClose: BigDecimal
 
-  "Opening of the period. Unit price of payout tokens denominated in USD dollars"
-  bondPriceUSDOpen: BigDecimal!
-  "Highest of the period. Unit price of payout tokens denominated in USD dollars"
-  bondPriceUSDHigh: BigDecimal!
-  "Lowest of the period. Unit price of payout tokens denominated in USD dollars"
-  bondPriceUSDLow: BigDecimal!
-  "Closing of the period. Unit price of payout tokens denominated in USD dollars"
-  bondPriceUSDClose: BigDecimal!
+  """
+  Opening of the period. Unit price of payout tokens denominated in USD dollars.
+  'null' if USD price unavailable or no bond purchases were made during the period
+  """
+  bondPriceUSDOpen: BigDecimal
+  """
+  Highest of the period. Unit price of payout tokens denominated in USD dollars.
+  'null' if USD price unavailable or no bond purchases were made during the period
+  """
+  bondPriceUSDHigh: BigDecimal
+  """
+  Lowest of the period. Unit price of payout tokens denominated in USD dollars.
+  'null' if USD price unavailable or no bond purchases were made during the period
+  """
+  bondPriceUSDLow: BigDecimal
+  """
+  Closing of the period. Unit price of payout tokens denominated in USD dollars.
+  'null' if USD price unavailable or no bond purchases were made during the period
+  """
+  bondPriceUSDClose: BigDecimal
 }
 
 """
@@ -105,49 +203,98 @@ The BondHourData entity stores data that is accumulated
 and condensed into hour stats for each bond
 """
 type BondHourData @entity {
-  id: ID!   # BOND_ADDRESS-TIMESTAMP
+  """
+  Concatenation of the bond's 'id' and the 'timestamp' field, seperated by '-'
+  """
+  id: ID!
 
-  "Timestamp indicating the start of the hour period"
+  """
+  Timestamp indicating the start of the period
+  """
   timestamp: BigInt!
 
-  "The bond related to these stats"
+  """
+  The bond related to these stats
+  """
   bond: Bond!
 
-  "Total number of bond purchases during the hour"
+  """
+  Total number of bond purchases during the period
+  """
   userBondCount: BigInt!
-  "Total number of bond redemptions during the hour"
+  """
+  Total number of bond redemptions during the period
+  """
   userRedemptionCount: BigInt!
 
-  "Total principle tokens that were bonded during the period"
+  """
+  Total principal tokens that were bonded during the period
+  """
   principalVolume: BigDecimal!
-  "Total value of principle tokens that were bonded during the period"
-  principalVolumeUSD: BigDecimal!
-  "Total payout tokens that were paid out as bonds during the period"
+  """
+  Total value of principal tokens in USD (at time of bonding) that were bonded during the period.
+  'null' if USD price was unavailable
+  """
+  principalVolumeUSD: BigDecimal
+  """
+  Total payout tokens that were paid out as bonds during the period
+  """
   payoutVolume: BigDecimal!
-  "Total value of tokens that were paid out as bonds during the period"
-  payoutVolumeUSD: BigDecimal!
-  "Total payout tokens that were redeemed during the period"
+  """
+  Total value of payout tokens in USD (at time of bonding) that were payed out during the period.
+  'null' if USD price was unavailable
+  """
+  payoutVolumeUSD: BigDecimal
+  """
+  Total payout tokens that were redeemed during the period
+  """
   redemptionVolume: BigDecimal!
-  "Total value of payout tokens that were redeemed during the period"
-  redemptionVolumeUSD: BigDecimal!
+  """
+  Total value of payout tokens in USD (at time of redemption) that were redeemed during the period.
+  'null' if USD price was unavailable
+  """
+  redemptionVolumeUSD: BigDecimal
 
-  "Opening of the period. Unit price of payout tokens denominated in principle token"
-  bondPriceOpen: BigDecimal!
-  "Highest of the period. Unit price of payout tokens denominated in principle token"
-  bondPriceHigh: BigDecimal!
-  "Lowest of the period. Unit price of payout tokens denominated in principle token"
-  bondPriceLow: BigDecimal!
-  "Closing of the period. Unit price of payout tokens denominated in principle token"
-  bondPriceClose: BigDecimal!
+  """
+  Opening of the period. Unit price of payout tokens denominated in principal token.
+  'null' if no bond purchases were made during the period
+  """
+  bondPriceOpen: BigDecimal
+  """Highest of the period. Unit price of payout tokens denominated in principal token.
+  'null' if no bond purchases were made during the period
+  """
+  bondPriceHigh: BigDecimal
+  """
+  Lowest of the period. Unit price of payout tokens denominated in principal token.
+  'null' if no bond purchases were made during the period
+  """
+  bondPriceLow: BigDecimal
+  """
+  Closing of the period. Unit price of payout tokens denominated in principal token.
+  'null' if no bond purchases were made during the period
+  """
+  bondPriceClose: BigDecimal
 
-  "Opening of the period. Unit price of payout tokens denominated in USD dollars"
-  bondPriceUSDOpen: BigDecimal!
-  "Highest of the period. Unit price of payout tokens denominated in USD dollars"
-  bondPriceUSDHigh: BigDecimal!
-  "Lowest of the period. Unit price of payout tokens denominated in USD dollars"
-  bondPriceUSDLow: BigDecimal!
-  "Closing of the period. Unit price of payout tokens denominated in USD dollars"
-  bondPriceUSDClose: BigDecimal!
+  """
+  Opening of the period. Unit price of payout tokens denominated in USD dollars.
+  'null' if USD price unavailable or no bond purchases were made during the period
+  """
+  bondPriceUSDOpen: BigDecimal
+  """
+  Highest of the period. Unit price of payout tokens denominated in USD dollars.
+  'null' if USD price unavailable or no bond purchases were made during the period
+  """
+  bondPriceUSDHigh: BigDecimal
+  """
+  Lowest of the period. Unit price of payout tokens denominated in USD dollars.
+  'null' if USD price unavailable or no bond purchases were made during the period
+  """
+  bondPriceUSDLow: BigDecimal
+  """
+  Closing of the period. Unit price of payout tokens denominated in USD dollars.
+  'null' if USD price unavailable or no bond purchases were made during the period
+  """
+  bondPriceUSDClose: BigDecimal
 }
 
 
@@ -158,55 +305,103 @@ type BondHourData @entity {
 The UserBond entity stores data about a single bond purchase by a user
 """
 type UserBond @entity {
-  ""
+  """
+  Concatenation of the transaction hash of the purchase and the event's 'logIndex', seperated by a '-'
+  """
   id: ID!
-  "Timestamp of bond purchase"
+
+  """
+  Timestamp of bond purchase
+  """
   timestamp: BigInt!
 
-  "Bond purchased"
+  """
+  Bond purchased
+  """
   bond: Bond!
-  "User making the purchase"
+  """
+  User making the purchase
+  """
   user: Bytes!
 
-  "Amount deposited, denominated in principal token"
+  """
+  Amount deposited, denominated in principal token
+  """
   deposit: BigDecimal!
-  "Amount deposited, denominated in USD (AT THE TIME OF BOND SALE!)"
-  depositUSD: BigDecimal!
-  "Amount paid out, denominated in payout token"
+  """
+  Amount deposited, denominated in USD (AT THE TIME OF BOND SALE!)
+  'null' if USD price not available
+  """
+  depositUSD: BigDecimal
+  """
+  Amount paid out, denominated in payout token
+  """
   payout: BigDecimal!
-  "Amount paid out, denominated in USD (AT THE TIME OF BOND SALE!)"
-  payoutUSD: BigDecimal!
+  """
+  Amount paid out, denominated in USD (AT THE TIME OF BOND SALE!).
+  'null' if USD price not available
+  """
+  payoutUSD: BigDecimal
 
-  "Timestamp indicating the bond expiry"
+  """
+  Block number indicating the bond expiry
+  """
   expires: BigInt!
+  """
+  Approximate unix timestamp indicating the bond expiry (assuming 6600 blocks per day)
+  """
+  expiresTimestamp: BigInt!
 
-  "Bond discount"
-  discount: BigDecimal!
+  """
+  Bond discount. 'null' if USD price of principal token or payout token unavailable
+  """
+  discount: BigDecimal
 }
 
 """
 The UserRedemption entity stores data about a single bond redemption by a user
 """
 type UserRedemption @entity {
-  ""
+  """
+  Concatenation of the transaction hash of the redemption and the event's 'logIndex', seperated by a '-'
+  """
   id: ID!
-  "Timestamp of bond purchase"
+  
+  """
+  Timestamp of bond redemption
+  """
   timestamp: BigInt!
 
-  "Bond redeemed"
+  """
+  Bond redeemed
+  """
   bond: Bond!
-  "User making the redemption"
+  """
+  User making the redemption
+  """
   user: Bytes!
 
-  "Address of recipient of redeemed tokens"
+  """
+  Address of recipient of redeemed tokens
+  """
   recipient: Bytes!
 
-  "Amount paid out, denominated in payout token"
+  """
+  Amount paid out, denominated in payout token
+  """
   payout: BigDecimal!
-  "Amount paid out, denominated in USD (AT THE TIME OF REDEMPTION!)"
-  payoutUSD: BigDecimal!
-  "Amount of tokens remaining to be redeemed"
+  """
+  Amount paid out, denominated in USD (AT THE TIME OF REDEMPTION!)
+  'null' if USD price unavailable
+  """
+  payoutUSD: BigDecimal
+  """
+  Amount of tokens remaining to be redeemed
+  """
   remaining: BigDecimal!
-  "Value of tokens remaining to be redeemed, denominated in USD"
-  remainingUSD: BigDecimal!
+  """
+  Value of tokens remaining to be redeemed, denominated in USD 
+  (AT THE TIME OF REDEMPTION!). 'null' if USD price unavailable
+  """
+  remainingUSD: BigDecimal
 }

@@ -107,9 +107,9 @@ test('Test BondCreated handler with ERC20 bond, no BondDayData, no BondHourData'
   event.transaction.hash = Bytes.fromByteArray(Bytes.fromHexString('0x65d085a9f690a6361e794c2eb872c152e3d9d84d523af02b276c4df6089f57c8'))  
 
   // Mock contract function calls
-  mockERC20_decimals(bond.principleToken.toHexString(), 18)
+  mockERC20_decimals(bond.principalToken.toHexString(), 18)
   mockERC20_decimals(bond.payoutToken.toHexString(), 18)
-  createMockedFunction(Address.fromString(bond.principleToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
+  createMockedFunction(Address.fromString(bond.principalToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
   createMockedFunction(Address.fromString(bond.payoutToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
   mockUniswapV2Router_getAmountsOut(
     ROUTERS[0],
@@ -121,7 +121,7 @@ test('Test BondCreated handler with ERC20 bond, no BondDayData, no BondHourData'
   mockUniswapV2Router_getAmountsOut(
     ROUTERS[0],
     BigInt.fromString('1000000000000000000'),
-    [bond.principleToken.toHexString(), NATIVE_TOKEN_ADDRESS],
+    [bond.principalToken.toHexString(), NATIVE_TOKEN_ADDRESS],
     [BigInt.fromString('1000000000000000000'), BigInt.fromString('1369000000000000')],  // 1 RUNE = 0.001369 ETH
     false
   )
@@ -217,10 +217,10 @@ test('Test BondCreated handler Tokemak token (tALCX), no BondDayData, no BondHou
   event.transaction.hash = Bytes.fromByteArray(Bytes.fromHexString('0x65d085a9f690a6361e794c2eb872c152e3d9d84d523af02b276c4df6089f57c8'))  
 
   // Mock contract function calls
-  mockERC20_decimals(bond.principleToken.toHexString(), 18)
+  mockERC20_decimals(bond.principalToken.toHexString(), 18)
   mockERC20_decimals(bond.payoutToken.toHexString(), 18)
   mockERC20_decimals('0xdbdb4d16eda451d0503b854cf79d55697f90c8df', 18)
-  createMockedFunction(Address.fromString(bond.principleToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
+  createMockedFunction(Address.fromString(bond.principalToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
   createMockedFunction(Address.fromString(bond.payoutToken.toHexString()), 'underlyer', 'underlyer():(address)')
     .returns([ethereum.Value.fromAddress(Address.fromString('0xdbdb4d16eda451d0503b854cf79d55697f90c8df'))])
   
@@ -234,7 +234,7 @@ test('Test BondCreated handler Tokemak token (tALCX), no BondDayData, no BondHou
   mockUniswapV2Router_getAmountsOut(
     ROUTERS[0],
     BigInt.fromString('1000000000000000000'),
-    [bond.principleToken.toHexString(), NATIVE_TOKEN_ADDRESS],
+    [bond.principalToken.toHexString(), NATIVE_TOKEN_ADDRESS],
     [BigInt.fromString('1000000000000000000'), BigInt.fromString('11500000000000000')],  // 1 TOKE = 0.0115 ETH
     false
   )
@@ -337,16 +337,16 @@ test('Test BondCreated handler with LP bond, no BondDayData, no BondHourData', (
   event.transaction.hash = Bytes.fromByteArray(Bytes.fromHexString('0x51d9ca4a200f422989cdec28c12bb95d664bab68a969f5ad176df23677c14283'))  
 
   // Mock contract function calls
-  mockERC20_decimals(bond.principleToken.toHexString(), 18)
+  mockERC20_decimals(bond.principalToken.toHexString(), 18)
   mockERC20_decimals(bond.payoutToken.toHexString(), 18)
   mockERC20_decimals(bond.token0.toHexString(), 18)
-  mockERC20_decimals(bond.token1.toHexString(), 18)
-  createMockedFunction(Address.fromString(bond.principleToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
+  mockERC20_decimals((<Bytes>bond.token1).toHexString(), 18)
+  createMockedFunction(Address.fromString(bond.principalToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
   createMockedFunction(Address.fromString(bond.payoutToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
   mockUniV2LPCalls(
-    bond.principleToken.toHexString(),
+    bond.principalToken.toHexString(),
     bond.token0.toHexString(),
-    bond.token1.toHexString(),
+    (<Bytes>bond.token1).toHexString(),
     18,
     BigInt.fromString('34770094856840480085461'),
     BigInt.fromString('3811589720283000748091169'),
@@ -453,17 +453,17 @@ test('Test BondCreated handler with Sorbet LP bond, no BondDayData, no BondHourD
   event.transaction.hash = Bytes.fromByteArray(Bytes.fromHexString('0x51d9ca4a200f422989cdec28c12bb95d664bab68a969f5ad176df23677c14283'))  
 
   // Mock contract function calls
-  mockERC20_decimals(bond.principleToken.toHexString(), 18)
+  mockERC20_decimals(bond.principalToken.toHexString(), 18)
   mockERC20_decimals(bond.payoutToken.toHexString(), 18)
   mockERC20_decimals(bond.token0.toHexString(), 18)
-  mockERC20_decimals(bond.token1.toHexString(), 18)
-  createMockedFunction(Address.fromString(bond.principleToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
+  mockERC20_decimals((<Bytes>bond.token1).toHexString(), 18)
+  createMockedFunction(Address.fromString(bond.principalToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
   createMockedFunction(Address.fromString(bond.payoutToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
-  mockUniV2LP_getReserves(bond.principleToken.toHexString(), BIGINT_ZERO, BIGINT_ZERO, BIGINT_ZERO, true)
+  mockUniV2LP_getReserves(bond.principalToken.toHexString(), BIGINT_ZERO, BIGINT_ZERO, BIGINT_ZERO, true)
   mockSorbetLPCalls(
-    bond.principleToken.toHexString(),
+    bond.principalToken.toHexString(),
     bond.token0.toHexString(),
-    bond.token1.toHexString(),
+    (<Bytes>bond.token1).toHexString(),
     18,
     BigInt.fromString('34770094856840480085461'),
     BigInt.fromString('3811589720283000748091169'),
@@ -570,16 +570,16 @@ test('Test BondRedemption handler with LP bond, no BondDayData, no BondHourData'
   purchase.transaction.hash = Bytes.fromByteArray(Bytes.fromHexString('0xe4773bdd2e478c01e7b39bb3e2f731c863bee235be6bbbd9a0f5071da9f45770'))  
 
   // Mock contract function calls
-  mockERC20_decimals(bond.principleToken.toHexString(), 18)
+  mockERC20_decimals(bond.principalToken.toHexString(), 18)
   mockERC20_decimals(bond.payoutToken.toHexString(), 18)
   mockERC20_decimals(bond.token0.toHexString(), 18)
-  mockERC20_decimals(bond.token1.toHexString(), 18)
-  createMockedFunction(Address.fromString(bond.principleToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
+  mockERC20_decimals((<Bytes>bond.token1).toHexString(), 18)
+  createMockedFunction(Address.fromString(bond.principalToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
   createMockedFunction(Address.fromString(bond.payoutToken.toHexString()), 'underlyer', 'underlyer():(address)').reverts()
   mockUniV2LPCalls(
-    bond.principleToken.toHexString(),
+    bond.principalToken.toHexString(),
     bond.token0.toHexString(),
-    bond.token1.toHexString(),
+    (<Bytes>bond.token1).toHexString(),
     18,
     BigInt.fromString('34770094856840480085461'),
     BigInt.fromString('3811589720283000748091169'),
