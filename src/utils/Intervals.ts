@@ -7,6 +7,9 @@ import { BIGINT_ONE } from "./Constants";
 // ================================================================
 // BondDayData
 // ================================================================
+// `initOrLoadBondDayData(event)` returns the `BondDayData` entity whose
+// period emcompasses the event `event`. If the `BondDayData` does not yet exist,
+// it is created.
 export function initOrLoadBondDayData(event: ethereum.Event): BondDayData {
   let timestamp = event.block.timestamp.toI32()
 
@@ -28,41 +31,8 @@ export function initOrLoadBondDayData(event: ethereum.Event): BondDayData {
   return <BondDayData>bondDayData
 }
 
-// export function updateBondDayData(event: ethereum.Event): BondDayData {
-//   let timestamp = event.block.timestamp.toI32()
-
-//   // Rounding
-//   let dayIndex = timestamp / 86400
-//   let dayStartTimestamp = dayIndex * 86400
-
-//   let dayBondID = event.address.toHexString() + "-" + dayStartTimestamp.toString()
-//   let bond = Bond.load(event.address.toHexString()) as Bond
-//   let bondDayData = BondDayData.load(dayBondID)
-//   if (!bondDayData) {
-//     bondDayData = new BondDayData(dayBondID)
-//     log.debug('updateBondDayData: Creating new BondDayData entity {}', [dayBondID])
-//     bondDayData.timestamp = BigInt.fromI32(dayStartTimestamp)
-//     bondDayData.bond = bond.id
-
-//     if (bond.latestUserBond) {
-//       let latestUserBond = UserBond.load(bond.latestUserBond as string) as UserBond
-//       let price = latestUserBond.deposit.div(latestUserBond.payout)
-//       bondDayData.bondPriceOpen = price
-//       bondDayData.bondPriceHigh = price
-//       bondDayData.bondPriceLow = price
-//       bondDayData.bondPriceClose = price
-  
-//       let priceUSD = latestUserBond.depositUSD.div(latestUserBond.payout)
-//       bondDayData.bondPriceUSDOpen = priceUSD
-//       bondDayData.bondPriceUSDHigh = priceUSD
-//       bondDayData.bondPriceUSDLow = priceUSD
-//       bondDayData.bondPriceUSDClose = priceUSD
-//     }
-//   }
-
-//   return bondDayData as BondDayData
-// }
-
+// `updateBondDayDataOnPurchase(bondDayData, userBond)` updates the `BondDayData` entity
+// `bondDayData` with the data contained in the `userBond` entity. 
 export function updateBondDayDataOnPurchase(
   bondDayData: BondDayData,
   userBond: UserBond
@@ -144,6 +114,9 @@ export function updateBondDayDataOnRedemption(
 // ================================================================
 // BondHourData
 // ================================================================
+// `initOrLoadBondHourData(event)` returns the `BondHourData` entity whose
+// period emcompasses the event `event`. If the `BondHourData` does not yet exist,
+// it is created.
 export function initOrLoadBondHourData(
   event: ethereum.Event
 ): BondHourData {
@@ -166,41 +139,6 @@ export function initOrLoadBondHourData(
 
   return <BondHourData>bondHourData
 }
-
-// export function updateBondHourData(event: ethereum.Event): BondHourData {
-//   let timestamp = event.block.timestamp.toI32()
-  
-//   // Rounding
-//   let hourIndex = timestamp / 3600
-//   let hourStartTimestamp = hourIndex * 3600
-
-//   let hourBondID = event.address.toHexString() + "-" + hourStartTimestamp.toString()
-//   let bond = Bond.load(event.address.toHexString()) as Bond
-//   let bondHourData = BondHourData.load(hourBondID)
-//   if (!bondHourData) {
-//     bondHourData = new BondHourData(hourBondID)
-//     log.debug('updateBondHourData: Creating new BondHourData entity {}', [hourBondID])
-//     bondHourData.timestamp = BigInt.fromI32(hourStartTimestamp)
-//     bondHourData.bond = bond.id
-
-//     if (bond.latestUserBond) {
-//       let latestUserBond = UserBond.load(bond.latestUserBond as string) as UserBond
-//       let price = latestUserBond.deposit.div(latestUserBond.payout)
-//       bondHourData.bondPriceOpen = price
-//       bondHourData.bondPriceHigh = price
-//       bondHourData.bondPriceLow = price
-//       bondHourData.bondPriceClose = price
-  
-//       let priceUSD = latestUserBond.depositUSD.div(latestUserBond.payout)
-//       bondHourData.bondPriceUSDOpen = priceUSD
-//       bondHourData.bondPriceUSDHigh = priceUSD
-//       bondHourData.bondPriceUSDLow = priceUSD
-//       bondHourData.bondPriceUSDClose = priceUSD
-//     }
-//   }
-
-//   return bondHourData as BondHourData
-// }
 
 export function updateBondHourDataOnPurchase(
   bondHourData: BondHourData,
