@@ -1,11 +1,13 @@
-import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts"
+import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts"
 
 import { ERC20 } from "../../generated/OlympusProFactoryV1/ERC20"
 import { UniswapV2Pair } from "../../generated/OlympusProFactoryV1/UniswapV2Pair"
 import { Bond, UserBond, UserRedemption } from "../../generated/schema"
-import { CustomBondV1, CustomBondV2 } from "../../generated/templates"
-import { BIGINT_ONE, ZERO_ADDRESS } from "./Constants"
+import { BIGINT_ONE } from "./Constants"
 
+
+// `initBond(...)` returns a new `Bond` entity initialized according to the arguments
+// provided
 export function initBond(
   id: string,
   timestamp: BigInt,
@@ -25,6 +27,8 @@ export function initBond(
 
   log.debug("Detected bond {} with principle token {}", [id, principalToken.toHexString()])
 
+  // Try to initialize LP token bond by trying the `token0` and `token1` functions
+  // on the contract with the provided principal token address
   let pair = UniswapV2Pair.bind(principalToken)
   let tryPairError = pair.try_token0().reverted || pair.try_token1().reverted
   if (tryPairError == false) {
@@ -40,6 +44,8 @@ export function initBond(
     return
   }
 
+  // Try to initialize ERC20 token bond by trying the `symbol` function on the 
+  // contract with the provided principal token address
   let erc20 = ERC20.bind(principalToken)
   let tryERC20 = erc20.try_symbol().reverted
   if (tryERC20 == false) {
@@ -57,6 +63,9 @@ export function initBond(
   log.error("Error bond {} principle token {}", [id, principalToken.toHexString()])
 }
 
+// `updateBondOnPurchase(bond, userBond)` updates the `bond` entity given the provided 
+// `userBond` entity. The `bond`'s user bond count and latest user bond reference are
+// updated
 export function updateBondOnPurchase(
   bond: Bond,
   latestUserBond: UserBond
@@ -67,6 +76,9 @@ export function updateBondOnPurchase(
   bond.save()
 }
 
+// `updateBondOnRedemption(bond, userRedemption)` updates the `bond` entity given the provided 
+// `userRedemption` entity. The `bond`'s user redemption count and latest user redemption 
+// reference are updated
 export function updateBondOnRedemption(
   bond: Bond,
   latestUserRedemption: UserRedemption

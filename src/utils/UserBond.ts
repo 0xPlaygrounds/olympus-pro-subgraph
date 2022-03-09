@@ -2,6 +2,11 @@ import { BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 import { Bond, UserBond } from "../../generated/schema";
 import { SECONDS_PER_BLOCK } from "./Constants";
 
+// `initUserBond(...)` returns a new `UserBond` entity initialized using the 
+// values provided as argument. The USD values (depositUSD and payoutUSD) 
+// default to `null` in case where the USD price for the principal or payout 
+// tokens (respsectively) is unavailable. If any of the aforementioned USD values
+// is `null`, then the discount value is also `null`
 export function initUserBond(
   event: ethereum.Event,
   bond: Bond,

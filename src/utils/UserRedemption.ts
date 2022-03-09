@@ -1,6 +1,9 @@
 import { BigDecimal, BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts";
 import { Bond, UserRedemption } from "../../generated/schema";
 
+// `initUserRedemption(...)` returns a new `UserRedemption` entity initialized 
+// using the values provided as argument. The USD values (payoutUSD and remainingUSD) 
+// default to `null` in case where the USD price for the payout token is unavailable.
 export function initUserRedemption(
   event: ethereum.Event,
   bond: Bond,

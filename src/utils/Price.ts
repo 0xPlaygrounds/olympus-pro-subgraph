@@ -1,7 +1,5 @@
 import { Address, BigDecimal, BigInt, log } from '@graphprotocol/graph-ts'
 
-import { ERC20 } from '../../generated/OlympusProFactoryV1/ERC20';
-import { UniswapRouter } from '../../generated/OlympusProFactoryV1/UniswapRouter';
 import { UniswapV2Pair } from '../../generated/OlympusProFactoryV1/UniswapV2Pair';
 import { GUniPool } from '../../generated/templates/CustomBondV2/GUniPool';
 import { TAsset } from '../../generated/templates/CustomBondV2/TAsset';
@@ -10,15 +8,12 @@ import { OffchainOracle } from '../../generated/templates/CustomBondV1/OffchainO
 
 import {
   NATIVE_TOKEN_ADDRESS,
-  STABLE_TOKEN_ADDRESS,
-  STABLE_TOKEN2_ADDRESS,
-  ROUTERS,
   NATIVE_TOKEN_DECIMALS,
-  STABLE_TOKEN_DECIMALS,
+  STABLE_TOKEN2_ADDRESS,
+  STABLE_TOKEN2_DECIMALS,
   BIGINT_ZERO,
   BIGDECIMAL_ZERO,
   ONE_INCH_ROUTER_ADDRESS,
-  STABLE_TOKEN2_DECIMALS,
 } from './Constants'
 import { toDecimal } from './Decimals'
 

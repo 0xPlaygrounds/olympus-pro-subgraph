@@ -31,8 +31,10 @@ export function initOrLoadBondDayData(event: ethereum.Event): BondDayData {
   return <BondDayData>bondDayData
 }
 
-// `updateBondDayDataOnPurchase(bondDayData, userBond)` updates the `BondDayData` entity
-// `bondDayData` with the data contained in the `userBond` entity. 
+// `updateBondDayDataOnPurchase(bondDayData, userBond)` updates the `bondDayData` entity
+// with the data contained in the `userBond` entity. The price OHLC values and the USD price 
+// OHLC values (if USD price is available) of `bondDayData` are set using the data contained
+//  in `userBond`. The user bond count and volume information for the period are also updated.
 export function updateBondDayDataOnPurchase(
   bondDayData: BondDayData,
   userBond: UserBond
@@ -90,6 +92,9 @@ export function updateBondDayDataOnPurchase(
   bondDayData.save()
 }
 
+// `updateBondDayDataOnRedemption(bondDayData, userRedemption)` updates the `bondDayData` entity
+// with the data contained in the `userRedemption` entity. The user redemption count and volume 
+// information for the period are updated.
 export function updateBondDayDataOnRedemption(
   bondDayData: BondDayData,
   userRedemption: UserRedemption
@@ -140,6 +145,10 @@ export function initOrLoadBondHourData(
   return <BondHourData>bondHourData
 }
 
+// `updateBondHourDataOnPurchase(bondHourData, userBond)` updates the `bondHourData` entity
+// with the data contained in the `userBond` entity. The price OHLC values and the USD price 
+// OHLC values (if USD price is available) of `bondHourData` are set using the data contained
+//  in `userBond`. The user bond count and volume information for the period are also updated.
 export function updateBondHourDataOnPurchase(
   bondHourData: BondHourData,
   userBond: UserBond
@@ -197,6 +206,9 @@ export function updateBondHourDataOnPurchase(
   bondHourData.save()
 }
 
+// `updateBondHourDataOnRedemption(bondHourData, userRedemption)` updates the `bondHourData` entity
+// with the data contained in the `userRedemption` entity. The user redemption count and volume 
+// information for the period are updated.
 export function updateBondHourDataOnRedemption(
   bondHourData: BondHourData,
   userRedemption: UserRedemption
