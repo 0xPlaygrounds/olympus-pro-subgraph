@@ -1,23 +1,23 @@
-specVersion: 0.0.2
+specVersion: 0.0.4
 schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: OlympusProFactory
+    name: OlympusProFactoryV1
     network: mainnet
     source:
       address: "0xb1F69deCb09D8490E3872FE26D27a7b83493cd65"
       startBlock: 13280000
-      abi: OlympusProFactory
+      abi: OlympusProFactoryV1
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - Bond
       abis:
-        - name: OlympusProFactory
-          file: ./abis/OlympusProFactory.json
+        - name: OlympusProFactoryV1
+          file: ./abis/OlympusProFactoryV1.json
         - name: ERC20
           file: ./abis/ERC20.json
         - name: UniswapV2Pair
@@ -26,33 +26,112 @@ dataSources:
           file: ./abis/UniswapRouter.json
       callHandlers:
         - function: createBond(address,address,address,address,uint256[],uint256[])
-          handler: createBond
+          handler: handleCreateBond
         - function: createBondAndTreasury(address,address,address,uint256[],uint256[])
-          handler: createBondAndTreasury
-      file: ./src/OPFactory.ts
-templates:
-  - name: CustomBond
-    kind: ethereum/contract
+          handler: handleCreateBondAndTreasury
+      file: ./src/OPFactoryV1.ts
+  - kind: ethereum/contract
+    name: OlympusProFactoryV2
     network: mainnet
     source:
-      abi: CustomBond
+      address: "0x6af02607A554E16087Fe33A5fC3ea104cbEf596F"
+      startBlock: 13753736
+      abi: OlympusProFactoryV2
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - Bond
-        - DailyBond
-      file: ./src/CustomBond.ts
       abis:
-        - name: CustomBond
-          file: ./abis/CustomBond.json
+        - name: OlympusProFactoryV2
+          file: ./abis/OlympusProFactoryV2.json
+        - name: CustomTreasuryV2
+          file: ./abis/CustomTreasuryV2.json
         - name: ERC20
           file: ./abis/ERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
         - name: UniswapRouter
           file: ./abis/UniswapRouter.json
+      callHandlers:
+        - function: createBond(address,address,address,uint256[],uint256[],bool)
+          handler: handleCreateBond
+        - function: createBondAndTreasury(address,address,address,uint256[],uint256[],bool)
+          handler: handleCreateBondAndTreasury
+      file: ./src/OPFactoryV2.ts
+templates:
+  - name: CustomBondV1
+    kind: ethereum/contract
+    network: mainnet
+    source:
+      abi: CustomBondV1
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Bond
+        - DailyBond
+      abis:
+        - name: CustomBondV1
+          file: ./abis/CustomBondV1.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: UniswapV2Pair
+          file: ./abis/UniswapV2Pair.json
+        - name: UniswapRouter
+          file: ./abis/UniswapRouter.json
+        - name: OffchainOracle
+          file: ./abis/OffchainOracle.json
+
+        # Special cases
+        - name: Hypervisor
+          file: ./abis/Hypervisor.json
+        - name: TAsset
+          file: ./abis/TAsset.json
+        - name: GUniPool
+          file: ./abis/GUniPool.json
       eventHandlers:
         - event: BondCreated(uint256,uint256,uint256)
           handler: handleBondCreated
+        - event: BondRedeemed(address,uint256,uint256)
+          handler: handleBondRedeemed
+      file: ./src/CustomBondV1.ts
+  - name: CustomBondV2
+    kind: ethereum/contract
+    network: mainnet
+    source:
+      abi: CustomBondV2
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Bond
+        - DailyBond
+      abis:
+        - name: CustomBondV2
+          file: ./abis/CustomBondV2.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: UniswapV2Pair
+          file: ./abis/UniswapV2Pair.json
+        - name: UniswapRouter
+          file: ./abis/UniswapRouter.json
+        - name: OffchainOracle
+          file: ./abis/OffchainOracle.json
+
+        # Special cases
+        - name: Hypervisor
+          file: ./abis/Hypervisor.json
+        - name: TAsset
+          file: ./abis/TAsset.json
+        - name: GUniPool
+          file: ./abis/GUniPool.json
+      eventHandlers:
+        - event: BondCreated(uint256,uint256,uint256)
+          handler: handleBondCreated
+        - event: BondRedeemed(address,uint256,uint256)
+          handler: handleBondRedeemed
+      file: ./src/CustomBondV2.ts

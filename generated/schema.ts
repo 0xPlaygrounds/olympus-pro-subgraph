@@ -6,7 +6,6 @@ import {
   Value,
   ValueKind,
   store,
-  Address,
   Bytes,
   BigInt,
   BigDecimal
@@ -16,98 +15,129 @@ export class Bond extends Entity {
   constructor(id: string) {
     super();
     this.set("id", Value.fromString(id));
+
+    this.set("createdAtTimestamp", Value.fromBigInt(BigInt.zero()));
+    this.set("owner", Value.fromBytes(Bytes.empty()));
+    this.set("name", Value.fromString(""));
+    this.set("token0", Value.fromBytes(Bytes.empty()));
+    this.set("treasury", Value.fromBytes(Bytes.empty()));
+    this.set("principalToken", Value.fromBytes(Bytes.empty()));
+    this.set("payoutToken", Value.fromBytes(Bytes.empty()));
+    this.set("fees", Value.fromBigDecimal(BigDecimal.zero()));
+    this.set("type", Value.fromString(""));
+    this.set("userBondCount", Value.fromBigInt(BigInt.zero()));
+    this.set("userRedemptionCount", Value.fromBigInt(BigInt.zero()));
   }
 
   save(): void {
     let id = this.get("id");
-    assert(id !== null, "Cannot save Bond entity without an ID");
-    assert(
-      id.kind == ValueKind.STRING,
-      "Cannot save Bond entity with non-string ID. " +
-        'Considering using .toHex() to convert the "id" to a string.'
-    );
-    store.set("Bond", id.toString(), this);
+    assert(id != null, "Cannot save Bond entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        "Cannot save Bond entity with non-string ID. " +
+          'Considering using .toHex() to convert the "id" to a string.'
+      );
+      store.set("Bond", id.toString(), this);
+    }
   }
 
   static load(id: string): Bond | null {
-    return store.get("Bond", id) as Bond | null;
+    return changetype<Bond | null>(store.get("Bond", id));
   }
 
   get id(): string {
     let value = this.get("id");
-    return value.toString();
+    return value!.toString();
   }
 
   set id(value: string) {
     this.set("id", Value.fromString(value));
   }
 
-  get owner(): string {
-    let value = this.get("owner");
-    return value.toString();
+  get createdAtTimestamp(): BigInt {
+    let value = this.get("createdAtTimestamp");
+    return value!.toBigInt();
   }
 
-  set owner(value: string) {
-    this.set("owner", Value.fromString(value));
+  set createdAtTimestamp(value: BigInt) {
+    this.set("createdAtTimestamp", Value.fromBigInt(value));
+  }
+
+  get owner(): Bytes {
+    let value = this.get("owner");
+    return value!.toBytes();
+  }
+
+  set owner(value: Bytes) {
+    this.set("owner", Value.fromBytes(value));
   }
 
   get name(): string {
     let value = this.get("name");
-    return value.toString();
+    return value!.toString();
   }
 
   set name(value: string) {
     this.set("name", Value.fromString(value));
   }
 
-  get token0(): string {
+  get token0(): Bytes {
     let value = this.get("token0");
-    return value.toString();
+    return value!.toBytes();
   }
 
-  set token0(value: string) {
-    this.set("token0", Value.fromString(value));
+  set token0(value: Bytes) {
+    this.set("token0", Value.fromBytes(value));
   }
 
-  get token1(): string {
+  get token1(): Bytes | null {
     let value = this.get("token1");
-    return value.toString();
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBytes();
+    }
   }
 
-  set token1(value: string) {
-    this.set("token1", Value.fromString(value));
+  set token1(value: Bytes | null) {
+    if (!value) {
+      this.unset("token1");
+    } else {
+      this.set("token1", Value.fromBytes(<Bytes>value));
+    }
   }
 
-  get treasury(): string {
+  get treasury(): Bytes {
     let value = this.get("treasury");
-    return value.toString();
+    return value!.toBytes();
   }
 
-  set treasury(value: string) {
-    this.set("treasury", Value.fromString(value));
+  set treasury(value: Bytes) {
+    this.set("treasury", Value.fromBytes(value));
   }
 
-  get principleToken(): string {
-    let value = this.get("principleToken");
-    return value.toString();
+  get principalToken(): Bytes {
+    let value = this.get("principalToken");
+    return value!.toBytes();
   }
 
-  set principleToken(value: string) {
-    this.set("principleToken", Value.fromString(value));
+  set principalToken(value: Bytes) {
+    this.set("principalToken", Value.fromBytes(value));
   }
 
-  get payoutToken(): string {
+  get payoutToken(): Bytes {
     let value = this.get("payoutToken");
-    return value.toString();
+    return value!.toBytes();
   }
 
-  set payoutToken(value: string) {
-    this.set("payoutToken", Value.fromString(value));
+  set payoutToken(value: Bytes) {
+    this.set("payoutToken", Value.fromBytes(value));
   }
 
   get fees(): BigDecimal {
     let value = this.get("fees");
-    return value.toBigDecimal();
+    return value!.toBigDecimal();
   }
 
   set fees(value: BigDecimal) {
@@ -116,11 +146,681 @@ export class Bond extends Entity {
 
   get type(): string {
     let value = this.get("type");
-    return value.toString();
+    return value!.toString();
   }
 
   set type(value: string) {
     this.set("type", Value.fromString(value));
+  }
+
+  get userBondCount(): BigInt {
+    let value = this.get("userBondCount");
+    return value!.toBigInt();
+  }
+
+  set userBondCount(value: BigInt) {
+    this.set("userBondCount", Value.fromBigInt(value));
+  }
+
+  get latestUserBond(): string | null {
+    let value = this.get("latestUserBond");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set latestUserBond(value: string | null) {
+    if (!value) {
+      this.unset("latestUserBond");
+    } else {
+      this.set("latestUserBond", Value.fromString(<string>value));
+    }
+  }
+
+  get userBonds(): Array<string> {
+    let value = this.get("userBonds");
+    return value!.toStringArray();
+  }
+
+  set userBonds(value: Array<string>) {
+    this.set("userBonds", Value.fromStringArray(value));
+  }
+
+  get userRedemptionCount(): BigInt {
+    let value = this.get("userRedemptionCount");
+    return value!.toBigInt();
+  }
+
+  set userRedemptionCount(value: BigInt) {
+    this.set("userRedemptionCount", Value.fromBigInt(value));
+  }
+
+  get latestUserRedemption(): string | null {
+    let value = this.get("latestUserRedemption");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set latestUserRedemption(value: string | null) {
+    if (!value) {
+      this.unset("latestUserRedemption");
+    } else {
+      this.set("latestUserRedemption", Value.fromString(<string>value));
+    }
+  }
+
+  get userRedemptions(): Array<string> {
+    let value = this.get("userRedemptions");
+    return value!.toStringArray();
+  }
+
+  set userRedemptions(value: Array<string>) {
+    this.set("userRedemptions", Value.fromStringArray(value));
+  }
+
+  get dailyData(): Array<string> {
+    let value = this.get("dailyData");
+    return value!.toStringArray();
+  }
+
+  set dailyData(value: Array<string>) {
+    this.set("dailyData", Value.fromStringArray(value));
+  }
+
+  get hourlyData(): Array<string> {
+    let value = this.get("hourlyData");
+    return value!.toStringArray();
+  }
+
+  set hourlyData(value: Array<string>) {
+    this.set("hourlyData", Value.fromStringArray(value));
+  }
+}
+
+export class BondDayData extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+
+    this.set("timestamp", Value.fromBigInt(BigInt.zero()));
+    this.set("bond", Value.fromString(""));
+    this.set("userBondCount", Value.fromBigInt(BigInt.zero()));
+    this.set("userRedemptionCount", Value.fromBigInt(BigInt.zero()));
+    this.set("principalVolume", Value.fromBigDecimal(BigDecimal.zero()));
+    this.set("payoutVolume", Value.fromBigDecimal(BigDecimal.zero()));
+    this.set("redemptionVolume", Value.fromBigDecimal(BigDecimal.zero()));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id != null, "Cannot save BondDayData entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        "Cannot save BondDayData entity with non-string ID. " +
+          'Considering using .toHex() to convert the "id" to a string.'
+      );
+      store.set("BondDayData", id.toString(), this);
+    }
+  }
+
+  static load(id: string): BondDayData | null {
+    return changetype<BondDayData | null>(store.get("BondDayData", id));
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get timestamp(): BigInt {
+    let value = this.get("timestamp");
+    return value!.toBigInt();
+  }
+
+  set timestamp(value: BigInt) {
+    this.set("timestamp", Value.fromBigInt(value));
+  }
+
+  get bond(): string {
+    let value = this.get("bond");
+    return value!.toString();
+  }
+
+  set bond(value: string) {
+    this.set("bond", Value.fromString(value));
+  }
+
+  get userBondCount(): BigInt {
+    let value = this.get("userBondCount");
+    return value!.toBigInt();
+  }
+
+  set userBondCount(value: BigInt) {
+    this.set("userBondCount", Value.fromBigInt(value));
+  }
+
+  get userRedemptionCount(): BigInt {
+    let value = this.get("userRedemptionCount");
+    return value!.toBigInt();
+  }
+
+  set userRedemptionCount(value: BigInt) {
+    this.set("userRedemptionCount", Value.fromBigInt(value));
+  }
+
+  get principalVolume(): BigDecimal {
+    let value = this.get("principalVolume");
+    return value!.toBigDecimal();
+  }
+
+  set principalVolume(value: BigDecimal) {
+    this.set("principalVolume", Value.fromBigDecimal(value));
+  }
+
+  get principalVolumeUSD(): BigDecimal | null {
+    let value = this.get("principalVolumeUSD");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set principalVolumeUSD(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("principalVolumeUSD");
+    } else {
+      this.set("principalVolumeUSD", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get payoutVolume(): BigDecimal {
+    let value = this.get("payoutVolume");
+    return value!.toBigDecimal();
+  }
+
+  set payoutVolume(value: BigDecimal) {
+    this.set("payoutVolume", Value.fromBigDecimal(value));
+  }
+
+  get payoutVolumeUSD(): BigDecimal | null {
+    let value = this.get("payoutVolumeUSD");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set payoutVolumeUSD(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("payoutVolumeUSD");
+    } else {
+      this.set("payoutVolumeUSD", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get redemptionVolume(): BigDecimal {
+    let value = this.get("redemptionVolume");
+    return value!.toBigDecimal();
+  }
+
+  set redemptionVolume(value: BigDecimal) {
+    this.set("redemptionVolume", Value.fromBigDecimal(value));
+  }
+
+  get redemptionVolumeUSD(): BigDecimal | null {
+    let value = this.get("redemptionVolumeUSD");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set redemptionVolumeUSD(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("redemptionVolumeUSD");
+    } else {
+      this.set("redemptionVolumeUSD", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get bondPriceOpen(): BigDecimal | null {
+    let value = this.get("bondPriceOpen");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set bondPriceOpen(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("bondPriceOpen");
+    } else {
+      this.set("bondPriceOpen", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get bondPriceHigh(): BigDecimal | null {
+    let value = this.get("bondPriceHigh");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set bondPriceHigh(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("bondPriceHigh");
+    } else {
+      this.set("bondPriceHigh", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get bondPriceLow(): BigDecimal | null {
+    let value = this.get("bondPriceLow");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set bondPriceLow(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("bondPriceLow");
+    } else {
+      this.set("bondPriceLow", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get bondPriceClose(): BigDecimal | null {
+    let value = this.get("bondPriceClose");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set bondPriceClose(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("bondPriceClose");
+    } else {
+      this.set("bondPriceClose", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get bondPriceUSDOpen(): BigDecimal | null {
+    let value = this.get("bondPriceUSDOpen");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set bondPriceUSDOpen(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("bondPriceUSDOpen");
+    } else {
+      this.set("bondPriceUSDOpen", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get bondPriceUSDHigh(): BigDecimal | null {
+    let value = this.get("bondPriceUSDHigh");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set bondPriceUSDHigh(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("bondPriceUSDHigh");
+    } else {
+      this.set("bondPriceUSDHigh", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get bondPriceUSDLow(): BigDecimal | null {
+    let value = this.get("bondPriceUSDLow");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set bondPriceUSDLow(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("bondPriceUSDLow");
+    } else {
+      this.set("bondPriceUSDLow", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get bondPriceUSDClose(): BigDecimal | null {
+    let value = this.get("bondPriceUSDClose");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set bondPriceUSDClose(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("bondPriceUSDClose");
+    } else {
+      this.set("bondPriceUSDClose", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+}
+
+export class BondHourData extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+
+    this.set("timestamp", Value.fromBigInt(BigInt.zero()));
+    this.set("bond", Value.fromString(""));
+    this.set("userBondCount", Value.fromBigInt(BigInt.zero()));
+    this.set("userRedemptionCount", Value.fromBigInt(BigInt.zero()));
+    this.set("principalVolume", Value.fromBigDecimal(BigDecimal.zero()));
+    this.set("payoutVolume", Value.fromBigDecimal(BigDecimal.zero()));
+    this.set("redemptionVolume", Value.fromBigDecimal(BigDecimal.zero()));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id != null, "Cannot save BondHourData entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        "Cannot save BondHourData entity with non-string ID. " +
+          'Considering using .toHex() to convert the "id" to a string.'
+      );
+      store.set("BondHourData", id.toString(), this);
+    }
+  }
+
+  static load(id: string): BondHourData | null {
+    return changetype<BondHourData | null>(store.get("BondHourData", id));
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get timestamp(): BigInt {
+    let value = this.get("timestamp");
+    return value!.toBigInt();
+  }
+
+  set timestamp(value: BigInt) {
+    this.set("timestamp", Value.fromBigInt(value));
+  }
+
+  get bond(): string {
+    let value = this.get("bond");
+    return value!.toString();
+  }
+
+  set bond(value: string) {
+    this.set("bond", Value.fromString(value));
+  }
+
+  get userBondCount(): BigInt {
+    let value = this.get("userBondCount");
+    return value!.toBigInt();
+  }
+
+  set userBondCount(value: BigInt) {
+    this.set("userBondCount", Value.fromBigInt(value));
+  }
+
+  get userRedemptionCount(): BigInt {
+    let value = this.get("userRedemptionCount");
+    return value!.toBigInt();
+  }
+
+  set userRedemptionCount(value: BigInt) {
+    this.set("userRedemptionCount", Value.fromBigInt(value));
+  }
+
+  get principalVolume(): BigDecimal {
+    let value = this.get("principalVolume");
+    return value!.toBigDecimal();
+  }
+
+  set principalVolume(value: BigDecimal) {
+    this.set("principalVolume", Value.fromBigDecimal(value));
+  }
+
+  get principalVolumeUSD(): BigDecimal | null {
+    let value = this.get("principalVolumeUSD");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set principalVolumeUSD(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("principalVolumeUSD");
+    } else {
+      this.set("principalVolumeUSD", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get payoutVolume(): BigDecimal {
+    let value = this.get("payoutVolume");
+    return value!.toBigDecimal();
+  }
+
+  set payoutVolume(value: BigDecimal) {
+    this.set("payoutVolume", Value.fromBigDecimal(value));
+  }
+
+  get payoutVolumeUSD(): BigDecimal | null {
+    let value = this.get("payoutVolumeUSD");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set payoutVolumeUSD(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("payoutVolumeUSD");
+    } else {
+      this.set("payoutVolumeUSD", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get redemptionVolume(): BigDecimal {
+    let value = this.get("redemptionVolume");
+    return value!.toBigDecimal();
+  }
+
+  set redemptionVolume(value: BigDecimal) {
+    this.set("redemptionVolume", Value.fromBigDecimal(value));
+  }
+
+  get redemptionVolumeUSD(): BigDecimal | null {
+    let value = this.get("redemptionVolumeUSD");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set redemptionVolumeUSD(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("redemptionVolumeUSD");
+    } else {
+      this.set("redemptionVolumeUSD", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get bondPriceOpen(): BigDecimal | null {
+    let value = this.get("bondPriceOpen");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set bondPriceOpen(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("bondPriceOpen");
+    } else {
+      this.set("bondPriceOpen", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get bondPriceHigh(): BigDecimal | null {
+    let value = this.get("bondPriceHigh");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set bondPriceHigh(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("bondPriceHigh");
+    } else {
+      this.set("bondPriceHigh", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get bondPriceLow(): BigDecimal | null {
+    let value = this.get("bondPriceLow");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set bondPriceLow(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("bondPriceLow");
+    } else {
+      this.set("bondPriceLow", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get bondPriceClose(): BigDecimal | null {
+    let value = this.get("bondPriceClose");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set bondPriceClose(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("bondPriceClose");
+    } else {
+      this.set("bondPriceClose", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get bondPriceUSDOpen(): BigDecimal | null {
+    let value = this.get("bondPriceUSDOpen");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set bondPriceUSDOpen(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("bondPriceUSDOpen");
+    } else {
+      this.set("bondPriceUSDOpen", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get bondPriceUSDHigh(): BigDecimal | null {
+    let value = this.get("bondPriceUSDHigh");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set bondPriceUSDHigh(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("bondPriceUSDHigh");
+    } else {
+      this.set("bondPriceUSDHigh", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get bondPriceUSDLow(): BigDecimal | null {
+    let value = this.get("bondPriceUSDLow");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set bondPriceUSDLow(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("bondPriceUSDLow");
+    } else {
+      this.set("bondPriceUSDLow", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get bondPriceUSDClose(): BigDecimal | null {
+    let value = this.get("bondPriceUSDClose");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set bondPriceUSDClose(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("bondPriceUSDClose");
+    } else {
+      this.set("bondPriceUSDClose", Value.fromBigDecimal(<BigDecimal>value));
+    }
   }
 }
 
@@ -128,78 +828,81 @@ export class UserBond extends Entity {
   constructor(id: string) {
     super();
     this.set("id", Value.fromString(id));
+
+    this.set("timestamp", Value.fromBigInt(BigInt.zero()));
+    this.set("bond", Value.fromString(""));
+    this.set("user", Value.fromBytes(Bytes.empty()));
+    this.set("deposit", Value.fromBigDecimal(BigDecimal.zero()));
+    this.set("payout", Value.fromBigDecimal(BigDecimal.zero()));
+    this.set("expires", Value.fromBigInt(BigInt.zero()));
+    this.set("expiresTimestamp", Value.fromBigInt(BigInt.zero()));
   }
 
   save(): void {
     let id = this.get("id");
-    assert(id !== null, "Cannot save UserBond entity without an ID");
-    assert(
-      id.kind == ValueKind.STRING,
-      "Cannot save UserBond entity with non-string ID. " +
-        'Considering using .toHex() to convert the "id" to a string.'
-    );
-    store.set("UserBond", id.toString(), this);
+    assert(id != null, "Cannot save UserBond entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        "Cannot save UserBond entity with non-string ID. " +
+          'Considering using .toHex() to convert the "id" to a string.'
+      );
+      store.set("UserBond", id.toString(), this);
+    }
   }
 
   static load(id: string): UserBond | null {
-    return store.get("UserBond", id) as UserBond | null;
+    return changetype<UserBond | null>(store.get("UserBond", id));
   }
 
   get id(): string {
     let value = this.get("id");
-    return value.toString();
+    return value!.toString();
   }
 
   set id(value: string) {
     this.set("id", Value.fromString(value));
   }
 
+  get timestamp(): BigInt {
+    let value = this.get("timestamp");
+    return value!.toBigInt();
+  }
+
+  set timestamp(value: BigInt) {
+    this.set("timestamp", Value.fromBigInt(value));
+  }
+
   get bond(): string {
     let value = this.get("bond");
-    return value.toString();
+    return value!.toString();
   }
 
   set bond(value: string) {
     this.set("bond", Value.fromString(value));
   }
 
-  get deposit(): BigDecimal | null {
+  get user(): Bytes {
+    let value = this.get("user");
+    return value!.toBytes();
+  }
+
+  set user(value: Bytes) {
+    this.set("user", Value.fromBytes(value));
+  }
+
+  get deposit(): BigDecimal {
     let value = this.get("deposit");
-    if (value === null || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toBigDecimal();
-    }
+    return value!.toBigDecimal();
   }
 
-  set deposit(value: BigDecimal | null) {
-    if (value === null) {
-      this.unset("deposit");
-    } else {
-      this.set("deposit", Value.fromBigDecimal(value as BigDecimal));
-    }
-  }
-
-  get payout(): BigDecimal | null {
-    let value = this.get("payout");
-    if (value === null || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toBigDecimal();
-    }
-  }
-
-  set payout(value: BigDecimal | null) {
-    if (value === null) {
-      this.unset("payout");
-    } else {
-      this.set("payout", Value.fromBigDecimal(value as BigDecimal));
-    }
+  set deposit(value: BigDecimal) {
+    this.set("deposit", Value.fromBigDecimal(value));
   }
 
   get depositUSD(): BigDecimal | null {
     let value = this.get("depositUSD");
-    if (value === null || value.kind == ValueKind.NULL) {
+    if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
       return value.toBigDecimal();
@@ -207,16 +910,25 @@ export class UserBond extends Entity {
   }
 
   set depositUSD(value: BigDecimal | null) {
-    if (value === null) {
+    if (!value) {
       this.unset("depositUSD");
     } else {
-      this.set("depositUSD", Value.fromBigDecimal(value as BigDecimal));
+      this.set("depositUSD", Value.fromBigDecimal(<BigDecimal>value));
     }
+  }
+
+  get payout(): BigDecimal {
+    let value = this.get("payout");
+    return value!.toBigDecimal();
+  }
+
+  set payout(value: BigDecimal) {
+    this.set("payout", Value.fromBigDecimal(value));
   }
 
   get payoutUSD(): BigDecimal | null {
     let value = this.get("payoutUSD");
-    if (value === null || value.kind == ValueKind.NULL) {
+    if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
       return value.toBigDecimal();
@@ -224,10 +936,173 @@ export class UserBond extends Entity {
   }
 
   set payoutUSD(value: BigDecimal | null) {
-    if (value === null) {
+    if (!value) {
       this.unset("payoutUSD");
     } else {
-      this.set("payoutUSD", Value.fromBigDecimal(value as BigDecimal));
+      this.set("payoutUSD", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get expires(): BigInt {
+    let value = this.get("expires");
+    return value!.toBigInt();
+  }
+
+  set expires(value: BigInt) {
+    this.set("expires", Value.fromBigInt(value));
+  }
+
+  get expiresTimestamp(): BigInt {
+    let value = this.get("expiresTimestamp");
+    return value!.toBigInt();
+  }
+
+  set expiresTimestamp(value: BigInt) {
+    this.set("expiresTimestamp", Value.fromBigInt(value));
+  }
+
+  get discount(): BigDecimal | null {
+    let value = this.get("discount");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set discount(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("discount");
+    } else {
+      this.set("discount", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+}
+
+export class UserRedemption extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+
+    this.set("timestamp", Value.fromBigInt(BigInt.zero()));
+    this.set("bond", Value.fromString(""));
+    this.set("user", Value.fromBytes(Bytes.empty()));
+    this.set("recipient", Value.fromBytes(Bytes.empty()));
+    this.set("payout", Value.fromBigDecimal(BigDecimal.zero()));
+    this.set("remaining", Value.fromBigDecimal(BigDecimal.zero()));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id != null, "Cannot save UserRedemption entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        "Cannot save UserRedemption entity with non-string ID. " +
+          'Considering using .toHex() to convert the "id" to a string.'
+      );
+      store.set("UserRedemption", id.toString(), this);
+    }
+  }
+
+  static load(id: string): UserRedemption | null {
+    return changetype<UserRedemption | null>(store.get("UserRedemption", id));
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get timestamp(): BigInt {
+    let value = this.get("timestamp");
+    return value!.toBigInt();
+  }
+
+  set timestamp(value: BigInt) {
+    this.set("timestamp", Value.fromBigInt(value));
+  }
+
+  get bond(): string {
+    let value = this.get("bond");
+    return value!.toString();
+  }
+
+  set bond(value: string) {
+    this.set("bond", Value.fromString(value));
+  }
+
+  get user(): Bytes {
+    let value = this.get("user");
+    return value!.toBytes();
+  }
+
+  set user(value: Bytes) {
+    this.set("user", Value.fromBytes(value));
+  }
+
+  get recipient(): Bytes {
+    let value = this.get("recipient");
+    return value!.toBytes();
+  }
+
+  set recipient(value: Bytes) {
+    this.set("recipient", Value.fromBytes(value));
+  }
+
+  get payout(): BigDecimal {
+    let value = this.get("payout");
+    return value!.toBigDecimal();
+  }
+
+  set payout(value: BigDecimal) {
+    this.set("payout", Value.fromBigDecimal(value));
+  }
+
+  get payoutUSD(): BigDecimal | null {
+    let value = this.get("payoutUSD");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set payoutUSD(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("payoutUSD");
+    } else {
+      this.set("payoutUSD", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get remaining(): BigDecimal {
+    let value = this.get("remaining");
+    return value!.toBigDecimal();
+  }
+
+  set remaining(value: BigDecimal) {
+    this.set("remaining", Value.fromBigDecimal(value));
+  }
+
+  get remainingUSD(): BigDecimal | null {
+    let value = this.get("remainingUSD");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set remainingUSD(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("remainingUSD");
+    } else {
+      this.set("remainingUSD", Value.fromBigDecimal(<BigDecimal>value));
     }
   }
 }

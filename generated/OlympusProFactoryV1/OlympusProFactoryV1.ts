@@ -10,7 +10,7 @@ import {
   BigInt
 } from "@graphprotocol/graph-ts";
 
-export class OlympusProFactory__createBondResult {
+export class OlympusProFactoryV1__createBondResult {
   value0: Address;
   value1: Address;
 
@@ -27,7 +27,7 @@ export class OlympusProFactory__createBondResult {
   }
 }
 
-export class OlympusProFactory__createBondAndTreasuryResult {
+export class OlympusProFactoryV1__createBondAndTreasuryResult {
   value0: Address;
   value1: Address;
 
@@ -44,9 +44,9 @@ export class OlympusProFactory__createBondAndTreasuryResult {
   }
 }
 
-export class OlympusProFactory extends ethereum.SmartContract {
-  static bind(address: Address): OlympusProFactory {
-    return new OlympusProFactory("OlympusProFactory", address);
+export class OlympusProFactoryV1 extends ethereum.SmartContract {
+  static bind(address: Address): OlympusProFactoryV1 {
+    return new OlympusProFactoryV1("OlympusProFactoryV1", address);
   }
 
   createBond(
@@ -56,7 +56,7 @@ export class OlympusProFactory extends ethereum.SmartContract {
     _initialOwner: Address,
     _tierCeilings: Array<BigInt>,
     _fees: Array<BigInt>
-  ): OlympusProFactory__createBondResult {
+  ): OlympusProFactoryV1__createBondResult {
     let result = super.call(
       "createBond",
       "createBond(address,address,address,address,uint256[],uint256[]):(address,address)",
@@ -70,7 +70,7 @@ export class OlympusProFactory extends ethereum.SmartContract {
       ]
     );
 
-    return new OlympusProFactory__createBondResult(
+    return new OlympusProFactoryV1__createBondResult(
       result[0].toAddress(),
       result[1].toAddress()
     );
@@ -83,7 +83,7 @@ export class OlympusProFactory extends ethereum.SmartContract {
     _initialOwner: Address,
     _tierCeilings: Array<BigInt>,
     _fees: Array<BigInt>
-  ): ethereum.CallResult<OlympusProFactory__createBondResult> {
+  ): ethereum.CallResult<OlympusProFactoryV1__createBondResult> {
     let result = super.tryCall(
       "createBond",
       "createBond(address,address,address,address,uint256[],uint256[]):(address,address)",
@@ -101,7 +101,7 @@ export class OlympusProFactory extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(
-      new OlympusProFactory__createBondResult(
+      new OlympusProFactoryV1__createBondResult(
         value[0].toAddress(),
         value[1].toAddress()
       )
@@ -114,7 +114,7 @@ export class OlympusProFactory extends ethereum.SmartContract {
     _initialOwner: Address,
     _tierCeilings: Array<BigInt>,
     _fees: Array<BigInt>
-  ): OlympusProFactory__createBondAndTreasuryResult {
+  ): OlympusProFactoryV1__createBondAndTreasuryResult {
     let result = super.call(
       "createBondAndTreasury",
       "createBondAndTreasury(address,address,address,uint256[],uint256[]):(address,address)",
@@ -127,7 +127,7 @@ export class OlympusProFactory extends ethereum.SmartContract {
       ]
     );
 
-    return new OlympusProFactory__createBondAndTreasuryResult(
+    return new OlympusProFactoryV1__createBondAndTreasuryResult(
       result[0].toAddress(),
       result[1].toAddress()
     );
@@ -139,7 +139,7 @@ export class OlympusProFactory extends ethereum.SmartContract {
     _initialOwner: Address,
     _tierCeilings: Array<BigInt>,
     _fees: Array<BigInt>
-  ): ethereum.CallResult<OlympusProFactory__createBondAndTreasuryResult> {
+  ): ethereum.CallResult<OlympusProFactoryV1__createBondAndTreasuryResult> {
     let result = super.tryCall(
       "createBondAndTreasury",
       "createBondAndTreasury(address,address,address,uint256[],uint256[]):(address,address)",
@@ -156,7 +156,7 @@ export class OlympusProFactory extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(
-      new OlympusProFactory__createBondAndTreasuryResult(
+      new OlympusProFactoryV1__createBondAndTreasuryResult(
         value[0].toAddress(),
         value[1].toAddress()
       )

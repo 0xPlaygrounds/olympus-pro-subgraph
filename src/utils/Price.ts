@@ -1,87 +1,170 @@
-import { NATIVE_TOKEN, STABLE_TOKEN, ROUTERS } from './Constants'
 import { Address, BigDecimal, BigInt, log } from '@graphprotocol/graph-ts'
-import { UniswapRouter } from '../../generated/OlympusProFactory/UniswapRouter';
+
+import { UniswapV2Pair } from '../../generated/OlympusProFactoryV1/UniswapV2Pair';
+import { GUniPool } from '../../generated/templates/CustomBondV2/GUniPool';
+import { TAsset } from '../../generated/templates/CustomBondV2/TAsset';
+import { Hypervisor } from '../../generated/templates/CustomBondV1/Hypervisor';
+import { OffchainOracle } from '../../generated/templates/CustomBondV1/OffchainOracle';
+
+import {
+  NATIVE_TOKEN_ADDRESS,
+  NATIVE_TOKEN_DECIMALS,
+  STABLE_TOKEN2_ADDRESS,
+  STABLE_TOKEN2_DECIMALS,
+  BIGINT_ZERO,
+  BIGDECIMAL_ZERO,
+  ONE_INCH_ROUTER_ADDRESS,
+} from './Constants'
 import { toDecimal } from './Decimals'
-import { ERC20 } from '../../generated/OlympusProFactory/ERC20';
-import { UniswapV2Pair } from '../../generated/OlympusProFactory/UniswapV2Pair';
 
-function removeDuplicatePath(path: Address[]): Address[] {
-    return path.filter(function(item, pos, arr){
-        return pos === 0 || item !== arr[pos-1];
-    });
-}
+// Addresses of special case tokens
+const xSDT_ADDRESS  = '0xac14864ce5a98af3248ffbf549441b04421247d3'
+const SDT_ADDRESS   = '0x73968b9a57c6e53d41345fd57a6e6ae27d6cdb2f'
 
-export function getSwap(tokenIn: string, tokenOut: string, usdOut: boolean): BigDecimal{
-    log.debug("Swap Rate {} {}", [tokenIn, tokenOut])
+// `getSwapPrice1Inch(tokenIn, tokenOut, tokenOutDecimals)` returns the price of 
+// the token with address `tokenIn` in terms of the token with address `tokenOut`
+// formatted to `tokenOutDecimals` decimals. Uses the 1Inch DEX aggregator contract
+// to get the price information. Returns `null` if the token price is unavailable.
+export function getSwapPrice1Inch(
+  tokenIn: string,
+  tokenOut: string,
+  tokenOutDecimals: u32
+): BigDecimal | null {
+  // Check if tokens are the same
+  if (tokenIn == tokenOut) {
+    return BigDecimal.fromString('1')
+  }
 
-    for (let i = 0; i < ROUTERS.length; i++) {
-        
-        let routerAdress = ROUTERS[i]
+  // SPECIAL CASES
+  // Check if tokenIn is Tokemak tAsset
+  let tAsset = TAsset.bind(Address.fromString(tokenIn))
+  let maybe_underlyer = tAsset.try_underlyer()
+  if (!maybe_underlyer.reverted) {
+    tokenIn = maybe_underlyer.value.toHexString()
+  }
 
-        log.debug("Using Router {}", [routerAdress])
+  // Check if tokenIn is Staked SDT
+  if (tokenIn == xSDT_ADDRESS) tokenIn = SDT_ADDRESS
 
-        let router = UniswapRouter.bind(Address.fromString(routerAdress))
-        let tokenInERC20 = ERC20.bind(Address.fromString(tokenIn))
-        let tokenOutERC20 = ERC20.bind(Address.fromString(tokenOut))
+  let router = OffchainOracle.bind(ONE_INCH_ROUTER_ADDRESS)
+  let swapPrice = router.try_getRate(
+    Address.fromString(tokenIn),
+    Address.fromString(tokenOut),
+    false
+  )
 
-        let path: Address[] = [Address.fromString(tokenIn), Address.fromString(tokenOut)];
-
-        if(tokenIn==NATIVE_TOKEN && tokenOut==NATIVE_TOKEN){
-            return BigDecimal.fromString("1")
-        }
-
-        let rateQuery = router.try_getAmountsOut(
-            BigInt.fromI32(10).pow(<u8>tokenInERC20.decimals()), 
-            path
-        )
-
-        if (rateQuery.reverted == false){
-            let swapRate = toDecimal(rateQuery.value.pop(),tokenOutERC20.decimals())
-            log.debug("Rate Result {}", [swapRate.toString()])
-            if(usdOut){
-                swapRate = swapRate.times(getNativeUSDRate())
-                log.debug("USD Rate Result {}", [swapRate.toString()])
-            }
-            log.debug("Swap Rate {} {} rate {}", [tokenIn, tokenOut, swapRate.toString()])
-            return swapRate
-        }
-        else {
-            log.error("Issue getting rate {} {}", [tokenIn, tokenOut])
-        }
+  // Only return price if available and not 0, otherwise return `null`
+  if (swapPrice.reverted) {
+    return null
+  } else {
+    if (swapPrice.value == BIGINT_ZERO) {
+      return null
+    } else {
+      return toDecimal(swapPrice.value, tokenOutDecimals)
     }
-    return BigDecimal.fromString("0")
+  }
 }
 
-export function getNativeUSDRate(): BigDecimal {
-    return getSwap(NATIVE_TOKEN, STABLE_TOKEN, false)
+export function getNativePrice1Inch(token: string): BigDecimal | null {
+  return getSwapPrice1Inch(token, NATIVE_TOKEN_ADDRESS, NATIVE_TOKEN_DECIMALS)
 }
 
-export function getPairUSD(lp_amount: BigInt, pair_adress: string): BigDecimal{
-    let pair = UniswapV2Pair.bind(Address.fromString(pair_adress))
-    let total_lp = pair.totalSupply()
-    
-    let isV2Pair = pair.try_getReserves()
-    if(isV2Pair.reverted){
-        log.error("V3 LP valuation not supported",[])
-        return BigDecimal.fromString("0")
+export function getStablePrice1Inch(token: string): BigDecimal | null {
+  return getSwapPrice1Inch(token, STABLE_TOKEN2_ADDRESS, STABLE_TOKEN2_DECIMALS)
+}
+
+// `getLPReserves(pairAddress)` returns the amount of tokens deposited in the 
+// LP token with address `pairAddress` as an array. Handles (in order):
+// - UniswapV2 LP tokens
+// - Visor LP tokens
+// - Sorbet finance LP tokens
+function getLPReserves(
+  pairAddress: string
+): BigInt[] | null {
+  // Uniswap V2 and clones
+  {
+    let pair = UniswapV2Pair.bind(Address.fromString(pairAddress))
+    let maybe_reserves = pair.try_getReserves()
+    if (!maybe_reserves.reverted) {
+      return [
+        maybe_reserves.value.value0,
+        maybe_reserves.value.value1
+      ]
     }
-    let lp_token_reserves = pair.getReserves().value0
-    let token = pair.token0()
+  }
 
-    let lpDecimal = toDecimal(lp_amount,pair.decimals())
-    log.debug("LPPAIR lpDecimal {}", [lpDecimal.toString()])
+  // Visor LP
+  {
+    let pair = Hypervisor.bind(Address.fromString(pairAddress))
+    let maybe_reserves = pair.try_getTotalAmounts()
+    if (!maybe_reserves.reverted) {
+      return [
+        maybe_reserves.value.value0,
+        maybe_reserves.value.value1
+      ]
+    }
+  }
 
-    let ownedLP = lpDecimal.div(toDecimal(total_lp,pair.decimals()))
-    log.debug("LPPAIR ownedLP {}", [ownedLP.toString()])
+  // Sorbet finance LP
+  {
+    let pair = GUniPool.bind(Address.fromString(pairAddress))
+    let maybe_reserves = pair.try_getUnderlyingBalances()
+    if (!maybe_reserves.reverted) {
+      return [
+        maybe_reserves.value.value0, 
+        maybe_reserves.value.value1
+      ]
+    }
+  }
 
-    let tokenERC20 = ERC20.bind(token)
- 
-    let token_price = getSwap(token.toHexString(), NATIVE_TOKEN, true)
-    log.debug("LPPAIR token_price {}", [token_price.toString()])
-    let token_value_in_lp = toDecimal(lp_token_reserves, tokenERC20.decimals()).times(token_price)
-    log.debug("LPPAIR token_value_in_lp {}", [token_value_in_lp.toString()])
-    let total_lp_usd = token_value_in_lp.times(BigDecimal.fromString("2")).times(ownedLP)
-    log.debug("LPPAIR total_lp_usd {}", [total_lp_usd.toString()])
+  return null
+}
 
-    return total_lp_usd
+// `getLPStablePrice(pairAddr, token0Addr, token1Addr, token0Dec, token1Dec)` 
+// returns the price in USD stablecoin (USDC) of the LP token with address `pairAddr`,
+// using the USD stablecoin price of the tokens with addresses `token0Addr` 
+// and `token1Addr`. `token0Dec` and `token1Dec` is used to format the token 
+// values to the correct number of decimals. `null` is returned if the USD 
+// stablecoin price is unavailable or the LP token is an unhandled type.
+export function getLPStablePrice(
+  pairAddress: string,
+  token0Address: string,
+  token1Address: string,
+  token0Decimals: u32,
+  token1Decimals: u32,
+  ): BigDecimal | null {
+  // Get token reserves
+  let reserves = getLPReserves(pairAddress)
+  if (!reserves) return null
+
+  let token0Reserve = reserves[0]
+  let token1Reserve = reserves[1]
+
+  let pair = UniswapV2Pair.bind(Address.fromString(pairAddress))
+
+  // Get total supply
+  let decimals = 18
+  let maybe_decimals = pair.try_decimals()
+  if (maybe_decimals.reverted) return null
+  else decimals = maybe_decimals.value
+
+  // Get total supply
+  let totalSupply = BIGDECIMAL_ZERO
+  let maybe_totalSupply = pair.try_totalSupply()
+  if (maybe_totalSupply.reverted) return null
+  else totalSupply = toDecimal(maybe_totalSupply.value, decimals)
+
+  // Get value of token0 reserve in stable token
+  let token0StablePrice = getStablePrice1Inch(token0Address)
+  if (!token0StablePrice) return null
+  let reserve0StableValue = toDecimal(token0Reserve, token0Decimals).times(token0StablePrice)
+
+  // Get value of token1 reserve in native token
+  let token1StablePrice = getStablePrice1Inch(token1Address)
+  if (!token1StablePrice) return null
+  let reserve1StableValue = toDecimal(token1Reserve, token1Decimals).times(token1StablePrice)
+  
+  let totalReservesNativeValue = reserve0StableValue.plus(reserve1StableValue)
+  
+  return totalReservesNativeValue.div(totalSupply)
 }
